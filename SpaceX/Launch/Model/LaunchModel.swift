@@ -6,6 +6,20 @@ class LaunchElement: Codable {
     let success: Bool?
     let rocket: String
     
+    var getDateUTC: String {
+        let dateFormatterGet = DateFormatter()
+        dateFormatterGet.dateFormat = "yyyy-MM-dd"
+        
+        let dateFormatterPrint = DateFormatter()
+        dateFormatterPrint.dateFormat = "dd MMM, yyyy"
+        
+        if let date = dateFormatterGet.date(from: String(dateUTC.prefix(10))) {
+            return dateFormatterPrint.string(from: date)
+        } else {
+            return "-"
+        }
+    }
+    
     enum CodingKeys: String, CodingKey {
         case name
         case dateUTC = "date_utc"
