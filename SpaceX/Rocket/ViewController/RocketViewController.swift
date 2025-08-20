@@ -3,6 +3,7 @@ import UIKit
 class RocketViewController: UIViewController {
     
     private let rocketViewModel: RocketViewModel
+    private let launchViewModel = LaunchViewModel()
     private let pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal)
     private let pageControl = UIPageControl()
     private let pageControlContainer = UIView()
@@ -21,7 +22,6 @@ class RocketViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         fetchData()
-        
     }
     
     private func setupUI() {
@@ -67,9 +67,21 @@ class RocketViewController: UIViewController {
                 switch result {
                 case .success:
                     self?.setupPages()
+                    self?.loadLaunches()
                 case .failure:
                     print("Error fetching rockets")
                 }
+            }
+        }
+    }
+    
+    private func loadLaunches() {
+        launchViewModel.loadAllLaunches { result in
+            switch result {
+            case .success:
+                print("Запуски загружены")
+            case .failure(let error):
+                print("Ошибка загрузки запусков: \(error)")
             }
         }
     }
