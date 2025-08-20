@@ -2,7 +2,17 @@ import UIKit
 
 class SettingsViewController: UIViewController {
     
-    let settingsView = SettingsView()
+    private let settingsView: SettingsView
+    private let viewModel = SettingsViewModel()
+    
+    init() {
+        self.settingsView = SettingsView(viewModel: viewModel)
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -18,6 +28,7 @@ class SettingsViewController: UIViewController {
     }
     
     @objc private func closeButtonTapped() {
+        settingsView.saveSettings()
         dismiss(animated: true, completion: nil)
     }
 }
