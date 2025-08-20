@@ -16,19 +16,15 @@ final class RocketView: UIView {
     let textBacking = UIView()
     let textContainer = UIView()
     
-    let graySquare = UIView()
-    let labelSquare = UILabel()
-    let stackView = UIStackView()
-    let scrollStackView = UIScrollView()
-    
+    let squareView: SquareView
     let labelStackView = UIStackView()
     
     let firstFlightLabel = UILabel()
     let firstFlight = UILabel()
-
+    
     let countryLabel = UILabel()
     let country = UILabel()
-
+    
     let costPerLaunchLabel = UILabel()
     let costPerLaunch = UILabel()
     
@@ -36,10 +32,10 @@ final class RocketView: UIView {
     
     let enginesCountFirstStageLabel = UILabel()
     let enginesCountFirstStage = UILabel()
-
+    
     let fuelAmountTonsFirstStageLabel = UILabel()
     let fuelAmountTonsFirstStage = UILabel()
-
+    
     let burnTimeSECFirstStageLabel = UILabel()
     let burnTimeSECFirstStage = UILabel()
     
@@ -50,11 +46,21 @@ final class RocketView: UIView {
     
     let fuelAmountTonsSecondtStageLabel = UILabel()
     let fuelAmountTonsSecondtStage = UILabel()
-
+    
     let burnTimeSECSecondtStageLabel = UILabel()
     let burnTimeSECSecondtStage = UILabel()
     
     let showLaunchesButton = UIButton()
+    
+    init(viewModel: SettingsViewModel) {
+        self.squareView = SquareView(viewModel: viewModel)
+        super.init(frame: .zero)
+        setupView()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     func configure(with rocket: RocketElement, imageURL: URL?) {
         self.imageURL = imageURL
@@ -74,7 +80,7 @@ final class RocketView: UIView {
         
         rocketNameLabel.text = rocket.name
         
-        firstFlight.text = rocket.firstFlight
+        firstFlight.text = rocket.getFirstFlightDate
         country.text = rocket.country
         costPerLaunch.text = String(rocket.costPerLaunch)
         
@@ -85,16 +91,13 @@ final class RocketView: UIView {
         enginesCountSecondtStage.text = String(rocket.secondStage.engines)
         fuelAmountTonsSecondtStage.text = String(rocket.secondStage.fuelAmountTons)
         burnTimeSECSecondtStage.text = String(rocket.secondStage.burnTimeSEC ?? 0)
-    }
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        setupView()
-    }
-    
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        setupView()
+        
+        squareView.configure(with: [
+            (metricValue: rocket.height.meters, imperialValue: rocket.height.feet, metricMeasure: "Высота, m", imperialMeasure: "Высота, ft"),
+            (metricValue: rocket.diameter.meters, imperialValue: rocket.diameter.feet, metricMeasure: "Диаметр, m", imperialMeasure: "Диаметр, ft"),
+            (metricValue: rocket.mass.kg, imperialValue: rocket.mass.lb, metricMeasure: "Масса, kg", imperialMeasure: "Масса, lb"),
+            (metricValue: rocket.payloadWeights.first?.kg, imperialValue: rocket.payloadWeights.first?.lb, metricMeasure: "Полезная нагрузка, kg", imperialMeasure: "Полезная нагрузка, lb")
+        ])
     }
     
     private func setupView() {
@@ -104,12 +107,11 @@ final class RocketView: UIView {
         setupTextContainer()
         setupTextBacking()
         setupRocketNameLabel()
-        setupScrollStackView()
-        setupStackView()
         setupSettingsButton()
+        setupSquareView()
         setupLabels()
         setupLabelStackView()
-        setupshowLaunchesButton()
+        setupShowLaunchesButton()
     }
     
     private func setupScrollView() {
@@ -122,7 +124,7 @@ final class RocketView: UIView {
         scrollView.addSubview(imageView)
         scrollView.addSubview(textBacking)
         scrollView.addSubview(textContainer)
-        scrollView.addSubview(scrollStackView)
+        scrollView.addSubview(squareView)
         scrollView.addSubview(settingsButton)
         scrollView.addSubview(labelStackView)
         scrollView.addSubview(showLaunchesButton)
@@ -195,84 +197,24 @@ final class RocketView: UIView {
             make.top.equalTo(textBacking.snp.top).inset(48)
             make.right.equalTo(textBacking).inset(32)
         }
-
     }
     
-    private func setupStackView() {
-        stackView.axis = .horizontal
-        stackView.spacing = 20
-        stackView.distribution = .equalSpacing
+    private func setupSquareView() {
+        scrollView.addSubview(squareView)
         
-        stackView.snp.makeConstraints { make in
-            make.top.bottom.equalTo(scrollStackView)
-            make.leading.equalTo(scrollStackView)
-            make.trailing.equalTo(scrollStackView)
-            make.height.equalTo(scrollStackView)
-            make.width.greaterThanOrEqualTo(scrollStackView).priority(.required)
-        }
-        
-        for i in 0..<4 {
-            let circle = UIView()
-            circle.backgroundColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1.00)
-            circle.layer.cornerRadius = 32
-            stackView.addArrangedSubview(circle)
-            
-            let labelStack = UIStackView()
-            labelStack.axis = .vertical
-            labelStack.spacing = 5
-            labelStack.alignment = .center
-            circle.addSubview(labelStack)
-            
-            let value = UILabel()
-            value.text = "\(i)"
-            value.textColor = .white
-            value.numberOfLines = 0
-            value.font = UIFont(name: "LabGrotesque-Bold", size: 16)
-            
-            let measure = UILabel()
-            measure.text = "\(i)"
-            measure.textColor = .white
-            measure.numberOfLines = 0
-            measure.font = UIFont(name: "LabGrotesque-Regular", size: 14)
-            
-            labelStack.addArrangedSubview(value)
-            labelStack.addArrangedSubview(measure)
-            
-            labelStack.snp.makeConstraints { make in
-                make.center.equalTo(circle)
-            }
-            
-            circle.snp.makeConstraints { make in
-                make.width.equalTo(96)
-                make.height.equalTo(96)
-            }
-        }
-    }
-    
-    private func setupScrollStackView() {
-        scrollStackView.showsHorizontalScrollIndicator = false
-        scrollStackView.addSubview(stackView)
-        
-        scrollStackView.snp.makeConstraints { make in
+        squareView.snp.makeConstraints { make in
             make.top.equalTo(rocketNameLabel.snp.bottom).offset(32)
             make.leading.equalTo(textContainer).inset(32)
             make.trailing.equalTo(textContainer)
-            make.height.greaterThanOrEqualTo(96)
+            make.height.equalTo(96)
         }
     }
     
-    func adjustScrollViewInsets(safeAreaInsets: UIEdgeInsets) {
-        scrollView.scrollIndicatorInsets = safeAreaInsets
-        scrollView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: safeAreaInsets.bottom, right: 0)
-    }
-    
     private func setupLabels() {
-        
         [firstFlightLabel, countryLabel, costPerLaunchLabel, enginesCountFirstStageLabel, fuelAmountTonsFirstStageLabel, burnTimeSECFirstStageLabel, enginesCountSecondtStageLabel, fuelAmountTonsSecondtStageLabel, burnTimeSECSecondtStageLabel].forEach {
             $0.textColor = UIColor(red: 0.79, green: 0.79, blue: 0.79, alpha: 1.00)
             $0.font = UIFont(name: "LabGrotesque-Regular", size: 16)
             $0.textAlignment = .left
-            
         }
         
         [firstFlight, country, costPerLaunch, enginesCountFirstStage, fuelAmountTonsFirstStage, burnTimeSECFirstStage, enginesCountSecondtStage, fuelAmountTonsSecondtStage, burnTimeSECSecondtStage].forEach {
@@ -281,14 +223,14 @@ final class RocketView: UIView {
             $0.textAlignment = .right
         }
         
-        firstStageTextLabel.textColor = .white
-        firstStageTextLabel.font = UIFont(name: "LabGrotesque-Bold", size: 16)
-        secondStageTextLabel.textColor = .white
-        secondStageTextLabel.font = UIFont(name: "LabGrotesque-Bold", size: 16)
+        [firstStageTextLabel, secondStageTextLabel].forEach {
+            $0.textColor = .white
+            $0.font = UIFont(name: "LabGrotesque-Bold", size: 16)
+        }
         
         firstStageTextLabel.text = "ПЕРВАЯ СТУПЕНЬ"
         secondStageTextLabel.text = "ВТОРАЯ СТУПЕНЬ"
-
+        
         firstFlightLabel.text = "Первый запуск"
         countryLabel.text = "Страна"
         costPerLaunchLabel.text = "Стоимость запуска"
@@ -303,7 +245,6 @@ final class RocketView: UIView {
     }
     
     private func setupLabelStackView() {
-        
         labelStackView.axis = .vertical
         labelStackView.spacing = 40
         labelStackView.distribution = .equalSpacing
@@ -312,7 +253,7 @@ final class RocketView: UIView {
         infoGroup.axis = .vertical
         infoGroup.spacing = 16
         [createHorizontalStack(label: firstFlightLabel, value: firstFlight),
-            createHorizontalStack(label: countryLabel, value: country),
+         createHorizontalStack(label: countryLabel, value: country),
          createHorizontalStack(label: costPerLaunchLabel, value: costPerLaunch)].forEach {
             infoGroup.addArrangedSubview($0)
         }
@@ -322,7 +263,7 @@ final class RocketView: UIView {
         firstStageGroup.spacing = 16
         firstStageGroup.addArrangedSubview(firstStageTextLabel)
         [createHorizontalStack(label: enginesCountFirstStageLabel, value: enginesCountFirstStage),
-            createHorizontalStack(label: fuelAmountTonsFirstStageLabel, value: fuelAmountTonsFirstStage),
+         createHorizontalStack(label: fuelAmountTonsFirstStageLabel, value: fuelAmountTonsFirstStage),
          createHorizontalStack(label: burnTimeSECFirstStageLabel, value: burnTimeSECFirstStage)].forEach {
             firstStageGroup.addArrangedSubview($0)
         }
@@ -332,7 +273,7 @@ final class RocketView: UIView {
         secondStageGroup.spacing = 16
         secondStageGroup.addArrangedSubview(secondStageTextLabel)
         [createHorizontalStack(label: enginesCountSecondtStageLabel, value: enginesCountSecondtStage),
-            createHorizontalStack(label: fuelAmountTonsSecondtStageLabel, value: fuelAmountTonsSecondtStage),
+         createHorizontalStack(label: fuelAmountTonsSecondtStageLabel, value: fuelAmountTonsSecondtStage),
          createHorizontalStack(label: burnTimeSECSecondtStageLabel, value: burnTimeSECSecondtStage)].forEach {
             secondStageGroup.addArrangedSubview($0)
         }
@@ -342,13 +283,11 @@ final class RocketView: UIView {
         labelStackView.addArrangedSubview(secondStageGroup)
         
         labelStackView.snp.makeConstraints { make in
-            make.top.equalTo(scrollStackView.snp.bottom).offset(40)
+            make.top.equalTo(squareView.snp.bottom).offset(40)
             make.leading.equalTo(textContainer).offset(32)
             make.trailing.equalTo(textContainer).inset(32)
-//            make.bottom.equalTo(textContainer).inset(40)
         }
     }
-    
     
     private func createHorizontalStack(label: UILabel, value: UILabel) -> UIStackView {
         let stackView = UIStackView()
@@ -363,7 +302,7 @@ final class RocketView: UIView {
         return stackView
     }
     
-    private func setupshowLaunchesButton() {
+    private func setupShowLaunchesButton() {
         showLaunchesButton.setTitle("Посмотреть запуски", for: .normal)
         showLaunchesButton.titleLabel?.font = UIFont(name: "LabGrotesque-Bold", size: 18)
         showLaunchesButton.tintColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.00)
@@ -377,6 +316,11 @@ final class RocketView: UIView {
             make.trailing.equalTo(textContainer).inset(32)
             make.bottom.equalTo(textContainer).inset(40)
         }
+    }
+    
+    func adjustScrollViewInsets(safeAreaInsets: UIEdgeInsets) {
+        scrollView.scrollIndicatorInsets = safeAreaInsets
+        scrollView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: safeAreaInsets.bottom, right: 0)
     }
 }
 
@@ -396,7 +340,7 @@ extension RocketView: UIScrollViewDelegate {
 }
 
 #Preview {
-    let rocketView =  RocketView()
+    let rocketView = RocketView(viewModel: SettingsViewModel())
     let viewController = UIViewController()
     viewController.view = rocketView
     return viewController
