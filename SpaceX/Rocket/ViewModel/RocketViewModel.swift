@@ -12,11 +12,6 @@ class RocketViewModel {
         self.rocketApiService = rocketApiService
     }
     
-//    func rocketName(at index: Int) -> String? {
-//        guard index < rockets.count else {return nil}
-//        return rockets[index].name
-//    }
-    
     func rocket(at index: Int) -> RocketElement? {
         guard index < rockets.count else {return nil}
         return rockets[index]
