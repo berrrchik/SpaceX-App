@@ -4,8 +4,19 @@ class RocketContentViewController: UIViewController {
     
     var pageIndex: Int = 0
     
-    let rocketView = RocketView()
+    let rocketView: RocketView
     private var previousStatusBarHidden = false
+    private var currentRocket: RocketElement?
+    
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        self.rocketView = RocketView(viewModel: SettingsViewModel())
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+    }
+    
+    required init?(coder: NSCoder) {
+        self.rocketView = RocketView(viewModel: SettingsViewModel())
+        super.init(coder: coder)
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -42,12 +53,13 @@ class RocketContentViewController: UIViewController {
     
     func configure(with rocket: RocketElement) {
         let randomImageURLString = rocket.flickrImages.randomElement()
-        let imageURL = randomImageURLString.flatMap { URL(string: $0) }
+        let imageURL: URL? = randomImageURLString.flatMap { URL(string: $0) }
         rocketView.configure(with: rocket, imageURL: imageURL)
+        self.currentRocket = rocket
     }
     
     private func setupSettingsButtonAction() {
-        rocketView.settingsButton.addTarget(self, action: #selector(settingsButtonTapped), for: .touchUpInside)
+        rocketView.settingsButton.addTarget(self, action: #selector(settingsButtonTapped), for: UIControl.Event.touchUpInside)
     }
     
     @objc private func settingsButtonTapped() {
@@ -57,11 +69,12 @@ class RocketContentViewController: UIViewController {
     }
     
     private func setupShowLaunchesButtonAction() {
-        rocketView.showLaunchesButton.addTarget(self, action: #selector(showLaunchesButtonTapped), for: .touchUpInside)
+        rocketView.showLaunchesButton.addTarget(self, action: #selector(showLaunchesButtonTapped), for: UIControl.Event.touchUpInside)
     }
     
     @objc private func showLaunchesButtonTapped() {
-        let launchViewController = LaunchViewController()
+        guard let rocket = currentRocket else { return }
+        let launchViewController = LaunchViewController(rocketId: rocket.id, rocketName: rocket.name)
         self.navigationController?.navigationBar.tintColor = .white
         navigationController?.pushViewController(launchViewController, animated: true)
     }
