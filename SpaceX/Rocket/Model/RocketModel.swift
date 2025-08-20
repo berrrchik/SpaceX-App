@@ -20,6 +20,30 @@ class RocketElement: Codable {
     
     let id: String
     
+    var getPayloadWeight: (String, String) {
+        let payloadWeightIsLb = UserDefaults.standard.bool(forKey: "payloadWeightIsLb")
+        
+        if payloadWeightIsLb {
+            return ("\(payloadWeights[0].lb)", "Полезная нагрузка, lb")
+        } else {
+            return ("\(payloadWeights[0].kg)", "Полезная нагрузка, kg")
+        }
+    }
+    
+    var getFirstFlightDate: String {
+        let dateFormatterGet = DateFormatter()
+        dateFormatterGet.dateFormat = "yyyy-MM-dd"
+        
+        let dateFormatterPrint = DateFormatter()
+        dateFormatterPrint.dateFormat = "dd MMM, yyyy"
+        
+        if let date = dateFormatterGet.date(from: firstFlight) {
+            return dateFormatterPrint.string(from: date)
+        } else {
+            return "-"
+        }
+    }
+    
     enum CodingKeys: String, CodingKey {
         case height, diameter, mass
         case firstStage = "first_stage"
@@ -89,13 +113,3 @@ class SecondStage: Codable {
         self.burnTimeSEC = burnTimeSEC
     }
 }
-
-//class PayloadWeight: Codable {
-//    let kg: Double
-//    let lb: Double
-//    
-//    init(kg: Double, lb: Double) {
-//        self.kg = kg
-//        self.lb = lb
-//    }
-//}
