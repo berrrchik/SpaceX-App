@@ -20,13 +20,3 @@ struct LaunchElement: Codable {
         }
     }
 }
-
-struct RocketLaunch: Codable {
-    let id: String
-    let name: String
-}
-
-struct RocketWithLaunches {
-    let rocket: RocketLaunch
-    var launches: [LaunchElement]
-}
