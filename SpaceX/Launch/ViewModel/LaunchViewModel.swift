@@ -15,7 +15,7 @@ class LaunchViewModel {
     
     func launch(at index: Int, for rocketId: String) -> LaunchElement? {
         let filteredLaunches = launches.filter {$0.rocket == rocketId}
-        let sortedLaunches = filteredLaunches.sorted {$0.dateUTC > $1.dateUTC}
+        let sortedLaunches = filteredLaunches.sorted {$0.dateUtc > $1.dateUtc}
         
         guard index < sortedLaunches.count else {return nil}
         return sortedLaunches[index]
@@ -50,7 +50,7 @@ class LaunchViewModel {
                 switch result {
                 case .success:
                     let filteredLaunches = self?.launches.filter {$0.rocket == rocketId} ?? []
-                    let sortedLaunches = filteredLaunches.sorted {$0.dateUTC > $1.dateUTC}
+                    let sortedLaunches = filteredLaunches.sorted {$0.dateUtc > $1.dateUtc}
                     completion(.success(sortedLaunches))
                 case .failure(let error):
                     completion(.failure(error))
@@ -60,7 +60,7 @@ class LaunchViewModel {
         }
         
         let filteredLaunches = launches.filter {$0.rocket == rocketId}
-        let sortedLaunches = filteredLaunches.sorted {$0.dateUTC > $1.dateUTC}
+        let sortedLaunches = filteredLaunches.sorted {$0.dateUtc > $1.dateUtc}
         completion(.success(sortedLaunches))
     }
     
