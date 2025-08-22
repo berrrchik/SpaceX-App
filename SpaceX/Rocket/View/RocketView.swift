@@ -70,7 +70,7 @@ final class RocketView: UIView {
                 with: imageURL,
                 placeholder: UIImage(named: "SomethingWentWrong"),
                 options: [
-                    .transition(.fade(0.3)),
+                    .transition(.fade(Constants.imageFadeDuration)),
                     .cacheOriginalImage
                 ]
             )
@@ -135,11 +135,11 @@ final class RocketView: UIView {
     }
     
     private func setupImageContainer() {
-        imageContainer.backgroundColor = .darkGray
+        imageContainer.backgroundColor = AppColors.darkGray
         imageContainer.snp.makeConstraints { make in
             make.top.equalTo(scrollView)
             make.left.right.equalTo(self)
-            make.height.equalTo(imageContainer.snp.width).multipliedBy(0.8)
+            make.height.equalTo(imageContainer.snp.width).multipliedBy(Constants.imageContainerHeightRatio)
         }
     }
     
@@ -156,46 +156,46 @@ final class RocketView: UIView {
     }
     
     private func setupTextContainer() {
-        textContainer.backgroundColor = .clear
+        textContainer.backgroundColor = AppColors.clear
         textContainer.addSubview(rocketNameLabel)
         
         textContainer.snp.makeConstraints { make in
-            make.top.equalTo(imageContainer.snp.bottom).offset(-30)
+            make.top.equalTo(imageContainer.snp.bottom).offset(-Constants.textContainerTopOffset)
             make.left.right.equalTo(self)
             make.bottom.equalTo(scrollView)
         }
     }
     
     private func setupTextBacking() {
-        textBacking.backgroundColor = .black
-        textBacking.layer.cornerRadius = 32
+        textBacking.backgroundColor = AppColors.black
+        textBacking.layer.cornerRadius = Constants.textBackingCornerRadius
         textBacking.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         textBacking.clipsToBounds = true
         
         textBacking.snp.makeConstraints { make in
             make.left.right.equalTo(self)
-            make.top.equalTo(imageContainer.snp.bottom).offset(-40)
+            make.top.equalTo(imageContainer.snp.bottom).offset(-Constants.textBackingTopOffset)
             make.bottom.equalTo(self)
         }
     }
     
     private func setupRocketNameLabel() {
-        rocketNameLabel.textColor = .white
+        rocketNameLabel.textColor = AppColors.white
         rocketNameLabel.numberOfLines = 0
-        rocketNameLabel.font = UIFont(name: "LabGrotesque-Bold", size: 32)
+        rocketNameLabel.font = AppFonts.bold32
         rocketNameLabel.snp.makeConstraints { make in
-            make.top.equalTo(textBacking.snp.top).inset(48)
-            make.left.equalTo(textBacking).offset(32)
+            make.top.equalTo(textBacking.snp.top).inset(Constants.rocketNameTopInset)
+            make.left.equalTo(textBacking).offset(Constants.rocketNameHorizontalMargin)
         }
     }
     
     private func setupSettingsButton() {
-        settingsButton.setImage(UIImage(systemName: "gearshape", withConfiguration: UIImage.SymbolConfiguration(pointSize: 32.0))?.withTintColor(UIColor.white), for: .normal)
-        settingsButton.tintColor = .white
+        settingsButton.setImage(UIImage(systemName: "gearshape", withConfiguration: UIImage.SymbolConfiguration(pointSize: Constants.settingsButtonSize))?.withTintColor(AppColors.white), for: .normal)
+        settingsButton.tintColor = AppColors.white
         
         settingsButton.snp.makeConstraints { make in
-            make.top.equalTo(textBacking.snp.top).inset(48)
-            make.right.equalTo(textBacking).inset(32)
+            make.top.equalTo(textBacking.snp.top).inset(Constants.rocketNameTopInset)
+            make.right.equalTo(textBacking).inset(Constants.settingsButtonTrailingMargin)
         }
     }
     
@@ -203,29 +203,29 @@ final class RocketView: UIView {
         scrollView.addSubview(squareView)
         
         squareView.snp.makeConstraints { make in
-            make.top.equalTo(rocketNameLabel.snp.bottom).offset(32)
-            make.leading.equalTo(textContainer).inset(32)
+            make.top.equalTo(rocketNameLabel.snp.bottom).offset(Constants.squareViewTopOffset)
+            make.leading.equalTo(textContainer).inset(Constants.squareViewHorizontalMargin)
             make.trailing.equalTo(textContainer)
-            make.height.equalTo(96)
+            make.height.equalTo(Constants.squareViewHeight)
         }
     }
     
     private func setupLabels() {
         [firstFlightLabel, countryLabel, costPerLaunchLabel, enginesCountFirstStageLabel, fuelAmountTonsFirstStageLabel, burnTimeSECFirstStageLabel, enginesCountSecondtStageLabel, fuelAmountTonsSecondtStageLabel, burnTimeSECSecondtStageLabel].forEach {
-            $0.textColor = UIColor(red: 0.79, green: 0.79, blue: 0.79, alpha: 1.00)
-            $0.font = UIFont(name: "LabGrotesque-Regular", size: 16)
+            $0.textColor = AppColors.labelGray79
+            $0.font = AppFonts.regular16
             $0.textAlignment = .left
         }
         
         [firstFlight, country, costPerLaunch, enginesCountFirstStage, fuelAmountTonsFirstStage, burnTimeSECFirstStage, enginesCountSecondtStage, fuelAmountTonsSecondtStage, burnTimeSECSecondtStage].forEach {
-            $0.textColor = .white
-            $0.font = UIFont(name: "LabGrotesque-Medium", size: 16)
+            $0.textColor = AppColors.white
+            $0.font = AppFonts.medium16
             $0.textAlignment = .right
         }
         
         [firstStageTextLabel, secondStageTextLabel].forEach {
-            $0.textColor = .white
-            $0.font = UIFont(name: "LabGrotesque-Bold", size: 16)
+            $0.textColor = AppColors.white
+            $0.font = AppFonts.bold16
         }
         
         firstStageTextLabel.text = "ПЕРВАЯ СТУПЕНЬ"
@@ -246,12 +246,12 @@ final class RocketView: UIView {
     
     private func setupLabelStackView() {
         labelStackView.axis = .vertical
-        labelStackView.spacing = 40
+        labelStackView.spacing = Constants.labelStackViewSpacing
         labelStackView.distribution = .equalSpacing
         
         let infoGroup = UIStackView()
         infoGroup.axis = .vertical
-        infoGroup.spacing = 16
+        infoGroup.spacing = Constants.groupStackViewSpacing
         [createHorizontalStack(label: firstFlightLabel, value: firstFlight),
          createHorizontalStack(label: countryLabel, value: country),
          createHorizontalStack(label: costPerLaunchLabel, value: costPerLaunch)].forEach {
@@ -260,7 +260,7 @@ final class RocketView: UIView {
         
         let firstStageGroup = UIStackView()
         firstStageGroup.axis = .vertical
-        firstStageGroup.spacing = 16
+        firstStageGroup.spacing = Constants.groupStackViewSpacing
         firstStageGroup.addArrangedSubview(firstStageTextLabel)
         [createHorizontalStack(label: enginesCountFirstStageLabel, value: enginesCountFirstStage),
          createHorizontalStack(label: fuelAmountTonsFirstStageLabel, value: fuelAmountTonsFirstStage),
@@ -270,7 +270,7 @@ final class RocketView: UIView {
         
         let secondStageGroup = UIStackView()
         secondStageGroup.axis = .vertical
-        secondStageGroup.spacing = 16
+        secondStageGroup.spacing = Constants.groupStackViewSpacing
         secondStageGroup.addArrangedSubview(secondStageTextLabel)
         [createHorizontalStack(label: enginesCountSecondtStageLabel, value: enginesCountSecondtStage),
          createHorizontalStack(label: fuelAmountTonsSecondtStageLabel, value: fuelAmountTonsSecondtStage),
@@ -283,16 +283,16 @@ final class RocketView: UIView {
         labelStackView.addArrangedSubview(secondStageGroup)
         
         labelStackView.snp.makeConstraints { make in
-            make.top.equalTo(squareView.snp.bottom).offset(40)
-            make.leading.equalTo(textContainer).offset(32)
-            make.trailing.equalTo(textContainer).inset(32)
+            make.top.equalTo(squareView.snp.bottom).offset(Constants.labelStackViewTopOffset)
+            make.leading.equalTo(textContainer).offset(Constants.labelStackViewHorizontalMargin)
+            make.trailing.equalTo(textContainer).inset(Constants.labelStackViewHorizontalMargin)
         }
     }
     
     private func createHorizontalStack(label: UILabel, value: UILabel) -> UIStackView {
         let stackView = UIStackView()
         stackView.axis = .horizontal
-        stackView.spacing = 20
+        stackView.spacing = Constants.horizontalStackSpacing
         stackView.distribution = .fill
         stackView.alignment = .center
         
@@ -304,17 +304,17 @@ final class RocketView: UIView {
     
     private func setupShowLaunchesButton() {
         showLaunchesButton.setTitle("Посмотреть запуски", for: .normal)
-        showLaunchesButton.titleLabel?.font = UIFont(name: "LabGrotesque-Bold", size: 18)
-        showLaunchesButton.tintColor = UIColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.00)
-        showLaunchesButton.backgroundColor = UIColor(.gray.opacity(0.3))
-        showLaunchesButton.layer.cornerRadius = 16
+        showLaunchesButton.titleLabel?.font = AppFonts.bold18
+        showLaunchesButton.tintColor = AppColors.buttonTint96
+        showLaunchesButton.backgroundColor = AppColors.buttonBackgroundGray
+        showLaunchesButton.layer.cornerRadius = Constants.buttonCornerRadius
         
         showLaunchesButton.snp.makeConstraints { make in
-            make.height.equalTo(56)
-            make.top.equalTo(labelStackView.snp.bottom).offset(40)
-            make.leading.equalTo(textContainer).offset(32)
-            make.trailing.equalTo(textContainer).inset(32)
-            make.bottom.equalTo(textContainer).inset(40)
+            make.height.equalTo(Constants.buttonHeight)
+            make.top.equalTo(labelStackView.snp.bottom).offset(Constants.buttonTopOffset)
+            make.leading.equalTo(textContainer).offset(Constants.buttonHorizontalMargin)
+            make.trailing.equalTo(textContainer).inset(Constants.buttonHorizontalMargin)
+            make.bottom.equalTo(textContainer).inset(Constants.buttonBottomMargin)
         }
     }
     
@@ -336,6 +336,33 @@ extension RocketView: UIScrollViewDelegate {
                 make.top.equalTo(self)
             }
         }
+    }
+}
+
+private extension RocketView {
+    enum Constants {
+        static let imageFadeDuration: TimeInterval = 0.3
+        static let imageContainerHeightRatio: CGFloat = 0.8
+        static let textContainerTopOffset: CGFloat = 30
+        static let textBackingTopOffset: CGFloat = 40
+        static let textBackingCornerRadius: CGFloat = 32
+        static let rocketNameTopInset: CGFloat = 48
+        static let rocketNameHorizontalMargin: CGFloat = 32
+        static let settingsButtonSize: CGFloat = 32
+        static let settingsButtonTrailingMargin: CGFloat = 32
+        static let squareViewTopOffset: CGFloat = 32
+        static let squareViewHorizontalMargin: CGFloat = 32
+        static let squareViewHeight: CGFloat = 96
+        static let labelStackViewTopOffset: CGFloat = 40
+        static let labelStackViewHorizontalMargin: CGFloat = 32
+        static let labelStackViewSpacing: CGFloat = 40
+        static let groupStackViewSpacing: CGFloat = 16
+        static let horizontalStackSpacing: CGFloat = 20
+        static let buttonCornerRadius: CGFloat = 16
+        static let buttonHeight: CGFloat = 56
+        static let buttonTopOffset: CGFloat = 40
+        static let buttonHorizontalMargin: CGFloat = 32
+        static let buttonBottomMargin: CGFloat = 40
     }
 }
 

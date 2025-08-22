@@ -64,13 +64,13 @@ final class SquareView: UIView {
         
         scrollStackView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
-            make.height.equalTo(96)
+            make.height.equalTo(Constants.squareHeight)
         }
     }
     
     private func setupSquareStack() {
         squareStack.axis = .horizontal
-        squareStack.spacing = 20
+        squareStack.spacing = Constants.stackSpacing
         squareStack.distribution = .equalSpacing
         scrollStackView.addSubview(squareStack)
         
@@ -83,27 +83,27 @@ final class SquareView: UIView {
     }
     
     private func setupSquares() {
-        for _ in 0..<4 {
+        for _ in 0..<Constants.squareCount {
             let square = UIView()
-            square.backgroundColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1.00)
-            square.layer.cornerRadius = 32
+            square.backgroundColor = AppColors.cardGray
+            square.layer.cornerRadius = Constants.squareCornerRadius
             
             let labelStack = UIStackView()
             labelStack.axis = .vertical
-            labelStack.spacing = 5
+            labelStack.spacing = Constants.labelStackSpacing
             labelStack.alignment = .center
             
             let valueLabel = UILabel()
-            valueLabel.textColor = .white
+            valueLabel.textColor = AppColors.white
             valueLabel.numberOfLines = 0
-            valueLabel.font = UIFont(name: "LabGrotesque-Bold", size: 16)
+            valueLabel.font = AppFonts.bold16
             
             let measureLabel = UILabel()
-            measureLabel.textColor = UIColor(red: 0.56, green: 0.56, blue: 0.56, alpha: 1.00)
+            measureLabel.textColor = AppColors.textGray56
             measureLabel.numberOfLines = 2
-            measureLabel.font = UIFont(name: "LabGrotesque-Regular", size: 14)
+            measureLabel.font = AppFonts.regular14
             measureLabel.adjustsFontSizeToFitWidth = true
-            measureLabel.minimumScaleFactor = 0.7
+            measureLabel.minimumScaleFactor = Constants.labelMinimumScaleFactor
             measureLabel.lineBreakMode = .byWordWrapping
             
             labelStack.addArrangedSubview(valueLabel)
@@ -112,12 +112,12 @@ final class SquareView: UIView {
             square.addSubview(labelStack)
             labelStack.snp.makeConstraints { make in
                 make.center.equalTo(square)
-                make.leading.greaterThanOrEqualTo(square).offset(8)
-                make.trailing.lessThanOrEqualTo(square).offset(-8)
+                make.leading.greaterThanOrEqualTo(square).offset(Constants.labelHorizontalMargin)
+                make.trailing.lessThanOrEqualTo(square).offset(-Constants.labelHorizontalMargin)
             }
             
             square.snp.makeConstraints { make in
-                make.width.height.equalTo(96)
+                make.width.height.equalTo(Constants.squareSize)
             }
             
             squareStack.addArrangedSubview(square)
@@ -140,5 +140,18 @@ final class SquareView: UIView {
         } else {
             squares.forEach { $0.valueLabel.text = "–"; $0.measureLabel.text = "" }
         }
+    }
+}
+
+private extension SquareView {
+    enum Constants {
+        static let squareCount: Int = 4
+        static let squareHeight: CGFloat = 96
+        static let squareSize: CGFloat = 96
+        static let squareCornerRadius: CGFloat = 32
+        static let stackSpacing: CGFloat = 20
+        static let labelStackSpacing: CGFloat = 5
+        static let labelHorizontalMargin: CGFloat = 8
+        static let labelMinimumScaleFactor: CGFloat = 0.7
     }
 }

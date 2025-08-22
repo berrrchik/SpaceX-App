@@ -21,21 +21,29 @@ final class LaunchView: UIView {
     }
     
     private func setupTableView() {
-        tableView.backgroundColor = .clear
+        tableView.backgroundColor = AppColors.clear
         tableView.separatorStyle = .none
         tableView.register(LaunchCell.self, forCellReuseIdentifier: "LaunchCell")
         tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 120
+        tableView.estimatedRowHeight = Constants.estimatedRowHeight
         
         tableView.snp.makeConstraints { make in
-            make.top.equalTo(safeAreaLayoutGuide).offset(40)
-            make.leading.equalToSuperview().offset(32)
-            make.trailing.equalToSuperview().inset(32)
+            make.top.equalTo(safeAreaLayoutGuide).offset(Constants.tableTopOffset)
+            make.leading.equalToSuperview().offset(Constants.horizontalMargin)
+            make.trailing.equalToSuperview().inset(Constants.horizontalMargin)
             make.bottom.equalToSuperview()
         }
     }
     
     @objc private func backButtonTapped() {
         onBackButtonTap?()
+    }
+}
+
+private extension LaunchView {
+    enum Constants {
+        static let tableTopOffset: CGFloat = 40
+        static let horizontalMargin: CGFloat = 32
+        static let estimatedRowHeight: CGFloat = 120
     }
 }

@@ -22,7 +22,7 @@ final class LaunchCell: UITableViewCell {
         dateLabel.text = launch.getDateUTC
         
         if let success = launch.success {
-            statusImageView.image = UIImage(named: success ? "LaunchSuccess" : "LaunchFail") 
+            statusImageView.image = UIImage(named: success ? "LaunchSuccess" : "LaunchFail")
         } else {
             statusImageView.image = UIImage(named: "unknown")
         }
@@ -30,7 +30,7 @@ final class LaunchCell: UITableViewCell {
     }
     
     private func setupView() {
-        contentView.backgroundColor = .black
+        contentView.backgroundColor = AppColors.black
         setupCardView()
         setupNameLabel()
         setupDateLabel()
@@ -42,39 +42,39 @@ final class LaunchCell: UITableViewCell {
         cardView.addSubview(nameLabel)
         cardView.addSubview(dateLabel)
         cardView.addSubview(statusImageView)
-        cardView.layer.cornerRadius = 24
-        cardView.backgroundColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1.00)
+        cardView.layer.cornerRadius = Constants.cardCornerRadius
+        cardView.backgroundColor = AppColors.cardGray
         cardView.clipsToBounds = true
         
         cardView.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(8)
+            make.top.equalToSuperview().offset(Constants.cardVerticalMargin)
             make.leading.trailing.equalToSuperview()
-            make.bottom.equalToSuperview().offset(-8)
+            make.bottom.equalToSuperview().offset(-Constants.cardVerticalMargin)
         }
     }
     
     private func setupNameLabel() {
         nameLabel.numberOfLines = 0
-        nameLabel.font = UIFont(name: "LabGrotesque-Regular", size: 20)
-        nameLabel.textColor = .white
+        nameLabel.font = AppFonts.regular20
+        nameLabel.textColor = AppColors.white
         
         nameLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(24)
-            make.leading.equalToSuperview().offset(24)
-            make.trailing.lessThanOrEqualTo(statusImageView.snp.leading).offset(-24)
+            make.top.equalToSuperview().offset(Constants.labelTopMargin)
+            make.leading.equalToSuperview().offset(Constants.labelHorizontalMargin)
+            make.trailing.lessThanOrEqualTo(statusImageView.snp.leading).offset(-Constants.labelHorizontalMargin)
         }
     }
     
     private func setupDateLabel() {
         dateLabel.numberOfLines = 1
-        dateLabel.font = UIFont(name: "LabGrotesque-Regular", size: 16)
-        dateLabel.textColor = UIColor(red: 0.56, green: 0.56, blue: 0.56, alpha: 1.00)
+        dateLabel.font = AppFonts.regular16
+        dateLabel.textColor = AppColors.textGray56
         
         dateLabel.snp.makeConstraints { make in
-            make.top.equalTo(nameLabel.snp.bottom).offset(4)
-            make.leading.equalToSuperview().offset(24)
-            make.trailing.lessThanOrEqualTo(statusImageView.snp.leading).offset(-24)
-            make.bottom.lessThanOrEqualToSuperview().offset(-24)
+            make.top.equalTo(nameLabel.snp.bottom).offset(Constants.dateLabelTopOffset)
+            make.leading.equalToSuperview().offset(Constants.labelHorizontalMargin)
+            make.trailing.lessThanOrEqualTo(statusImageView.snp.leading).offset(-Constants.labelHorizontalMargin)
+            make.bottom.lessThanOrEqualToSuperview().offset(-Constants.labelBottomMargin)
         }
     }
     
@@ -82,8 +82,8 @@ final class LaunchCell: UITableViewCell {
         statusImageView.contentMode = .scaleAspectFit
         statusImageView.snp.makeConstraints { make in
             make.centerY.equalToSuperview()
-            make.trailing.equalToSuperview().inset(32)
-            make.width.height.equalTo(32)
+            make.trailing.equalToSuperview().inset(Constants.statusImageTrailingMargin)
+            make.width.height.equalTo(Constants.statusImageSize)
         }
     }
     
@@ -92,5 +92,18 @@ final class LaunchCell: UITableViewCell {
         nameLabel.text = nil
         dateLabel.text = nil
         statusImageView.image = nil
+    }
+}
+
+private extension LaunchCell {
+    enum Constants {
+        static let cardCornerRadius: CGFloat = 24
+        static let cardVerticalMargin: CGFloat = 8
+        static let labelTopMargin: CGFloat = 24
+        static let labelHorizontalMargin: CGFloat = 24
+        static let dateLabelTopOffset: CGFloat = 4
+        static let labelBottomMargin: CGFloat = 24
+        static let statusImageTrailingMargin: CGFloat = 32
+        static let statusImageSize: CGFloat = 32
     }
 }

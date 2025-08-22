@@ -29,19 +29,19 @@ class RocketViewController: UIViewController {
         view.addSubview(pageViewController.view)
         
         let pageControlContainer = UIView()
-        pageControlContainer.backgroundColor = UIColor(red: 0.07, green: 0.07, blue: 0.07, alpha: 1)
+        pageControlContainer.backgroundColor = AppColors.pageControlContainer
         
         view.addSubview(pageControlContainer)
         pageControlContainer.addSubview(pageControl)
         
         pageViewController.didMove(toParent: self)
         
-        view.backgroundColor = .black
+        view.backgroundColor = AppColors.black
         pageViewController.dataSource = self
         pageViewController.delegate = self
         
-        pageControl.currentPageIndicatorTintColor = .white
-        pageControl.pageIndicatorTintColor = .lightGray
+        pageControl.currentPageIndicatorTintColor = AppColors.white
+        pageControl.pageIndicatorTintColor = AppColors.lightGray
         pageControl.addTarget(self, action: #selector(pageControlChanged(_:)), for: .valueChanged)
         
         pageViewController.view.snp.makeConstraints { make in
@@ -51,12 +51,12 @@ class RocketViewController: UIViewController {
         
         pageControlContainer.snp.makeConstraints { make in
             make.leading.trailing.bottom.equalToSuperview()
-            make.height.equalTo(view.safeAreaInsets.bottom + 70)
+            make.height.equalTo(view.safeAreaInsets.bottom + Constants.pageControlContainerHeight)
         }
         
         pageControl.snp.makeConstraints { make in
             make.centerX.equalToSuperview()
-            make.top.equalToSuperview().offset(16)
+            make.top.equalToSuperview().offset(Constants.pageControlTopOffset)
             make.leading.trailing.equalToSuperview()
         }
     }
@@ -134,5 +134,12 @@ extension RocketViewController: UIPageViewControllerDelegate {
         guard let currentVC = pageViewController.viewControllers?.first as? RocketContentViewController,
               let index = rocketViewControllers.firstIndex(of: currentVC) else { return }
         pageControl.currentPage = index
+    }
+}
+
+private extension RocketViewController {
+    enum Constants {
+        static let pageControlContainerHeight: CGFloat = 70
+        static let pageControlTopOffset: CGFloat = 16
     }
 }

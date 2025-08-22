@@ -19,7 +19,7 @@ final class SettingsView: UIView {
     init(viewModel: SettingsViewModel) {
         self.viewModel = viewModel
         super.init(frame: .zero)
-        backgroundColor = .black
+        backgroundColor = AppColors.black
         setupViews()
     }
     
@@ -37,13 +37,13 @@ final class SettingsView: UIView {
     private func setupSettingsLabel() {
         addSubview(settingsLabel)
         settingsLabel.text = "Настройки"
-        settingsLabel.textColor = .white
+        settingsLabel.textColor = AppColors.white
         settingsLabel.numberOfLines = 0
-        settingsLabel.font = UIFont(name: "LabGrotesque-Medium", size: 16)
+        settingsLabel.font = AppFonts.medium16
         settingsLabel.translatesAutoresizingMaskIntoConstraints = false
 
         settingsLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(24)
+            make.top.equalToSuperview().offset(Constants.settingsLabelTopOffset)
             make.centerX.equalToSuperview()
         }
     }
@@ -51,19 +51,19 @@ final class SettingsView: UIView {
     private func setupCloseButton() {
         addSubview(closeButton)
         closeButton.setTitle("Закрыть", for: .normal)
-        closeButton.setTitleColor(.white, for: .normal)
-        closeButton.titleLabel?.font = UIFont(name: "LabGrotesque-Bold", size: 16)
+        closeButton.setTitleColor(AppColors.white, for: .normal)
+        closeButton.titleLabel?.font = AppFonts.bold16
         
         closeButton.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(18)
-            make.trailing.equalToSuperview().inset(24)
+            make.top.equalToSuperview().offset(Constants.closeButtonTopOffset)
+            make.trailing.equalToSuperview().inset(Constants.closeButtonTrailingMargin)
         }
     }
     
     private func setupLabels() {
         [heightLabel, diameterLabel, massLabel, payloadWeightsLabel].forEach {
-            $0.textColor = .white
-            $0.font = UIFont(name: "LabGrotesque-Medium", size: 16)
+            $0.textColor = AppColors.white
+            $0.font = AppFonts.medium16
         }
         
         heightLabel.text = "Высота"
@@ -83,7 +83,7 @@ final class SettingsView: UIView {
         ]
         
         labelStackView.axis = .vertical
-        labelStackView.spacing = 24
+        labelStackView.spacing = Constants.stackViewSpacing
         labelStackView.distribution = .equalSpacing
         
         horizontalStacks.forEach { labelStackView.addArrangedSubview($0) }
@@ -92,9 +92,9 @@ final class SettingsView: UIView {
         labelStackView.translatesAutoresizingMaskIntoConstraints = false
         
         labelStackView.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(112)
-            make.leading.equalToSuperview().offset(28)
-            make.trailing.equalToSuperview().inset(28)
+            make.top.equalToSuperview().offset(Constants.stackViewTopOffset)
+            make.leading.equalToSuperview().offset(Constants.stackViewHorizontalMargin)
+            make.trailing.equalToSuperview().inset(Constants.stackViewHorizontalMargin)
         }
     }
     
@@ -106,12 +106,8 @@ final class SettingsView: UIView {
             self?.viewModel.toggleState(at: index)
         }
         
-        // сообщает SettingsView, что переключатель изменил состояние,
-        // и вызывает метод viewModel.toggleState(at: index),
-        // чтобы обновить состояние в SettingsViewModel и сохранить его в UserDefaults.
-        
         stackView.axis = .horizontal
-        stackView.spacing = 20
+        stackView.spacing = Constants.horizontalStackSpacing
         stackView.distribution = .fill
         stackView.alignment = .center
         
@@ -128,3 +124,14 @@ final class SettingsView: UIView {
     }
 }
 
+private extension SettingsView {
+    enum Constants {
+        static let settingsLabelTopOffset: CGFloat = 24
+        static let closeButtonTopOffset: CGFloat = 18
+        static let closeButtonTrailingMargin: CGFloat = 24
+        static let stackViewTopOffset: CGFloat = 112
+        static let stackViewHorizontalMargin: CGFloat = 28
+        static let stackViewSpacing: CGFloat = 24
+        static let horizontalStackSpacing: CGFloat = 20
+    }
+}

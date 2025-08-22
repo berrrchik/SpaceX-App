@@ -35,16 +35,16 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
         
     private func setupViewController() {
         view = launchView
-        launchView.backgroundColor = .black
+        launchView.backgroundColor = AppColors.black
         
         let backButton = UIBarButtonItem()
         backButton.title = "Назад"
         navigationController?.navigationBar.topItem?.backBarButtonItem = backButton
         
         navigationItem.title = rocketName
-        navigationController?.navigationBar.barTintColor = .black
+        navigationController?.navigationBar.barTintColor = AppColors.black
         navigationController?.navigationBar.isTranslucent = false
-        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: AppColors.white]
     }
     
     private func setupTableView() {
@@ -57,7 +57,6 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
             self?.navigationController?.popViewController(animated: true)
         }
     }
-    
     
     private func loadLaunchesData() {
         launchViewModel.loadAllLaunches { [weak self] result in
@@ -113,10 +112,10 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     
     private func createErrorCell(with message: String) -> UITableViewCell {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-        cell.backgroundColor = .clear
+        cell.backgroundColor = AppColors.clear
         cell.textLabel?.text = message
-        cell.textLabel?.textColor = UIColor(red: 0.56, green: 0.56, blue: 0.56, alpha: 1.00)
-        cell.textLabel?.font = UIFont(name: "LabGrotesque-Regular", size: 14)
+        cell.textLabel?.textColor = AppColors.textGray56
+        cell.textLabel?.font = AppFonts.regular14
         cell.textLabel?.textAlignment = .center
         cell.selectionStyle = .none
         return cell
@@ -130,6 +129,12 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return errorMessage != nil ? 100 : UITableView.automaticDimension
+        return errorMessage != nil ? Constants.errorRowHeight : UITableView.automaticDimension
+    }
+}
+
+private extension LaunchViewController {
+    enum Constants {
+        static let errorRowHeight: CGFloat = 100
     }
 }

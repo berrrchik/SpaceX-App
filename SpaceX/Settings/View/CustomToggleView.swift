@@ -11,15 +11,15 @@ final class CustomToggleView: UIView {
     private var leadingConstraint: Constraint?
     
     var isOn: Bool = false {
-        didSet { //автоматически выполняется каждый раз, когда значение isOn изменяется
+        didSet {
             updateUI(animated: true)
         }
     }
     
-    var onToggle: ((Bool) -> Void)? //переменная, которая может хранить функцию (или быть nil), принимающую булево значение и не возвращающую ничего.
+    var onToggle: ((Bool) -> Void)?
     
     init(firstText: String, secondText: String, initialState: Bool = false) {
-        self.isOn = initialState //свойство isOn устанавливается в начальное значение (initialState), и updateUI(animated: false) вызывается для настройки начального вида без анимации.
+        self.isOn = initialState
         super.init(frame: .zero)
         setupViews(firstText: firstText, secondText: secondText)
         updateUI(animated: false)
@@ -39,7 +39,7 @@ final class CustomToggleView: UIView {
     private func setupGrayRectangle() {
         addSubview(grayRectangle)
         grayRectangle.layer.cornerRadius = Constants.cornerRadius
-        grayRectangle.backgroundColor = Constants.grayRectangleColor
+        grayRectangle.backgroundColor = AppColors.cardGray
         grayRectangle.isUserInteractionEnabled = true
         
         grayRectangle.snp.makeConstraints { make in
@@ -55,7 +55,7 @@ final class CustomToggleView: UIView {
     private func setupToggleIndicator() {
         grayRectangle.addSubview(toggleIndicator)
         toggleIndicator.layer.cornerRadius = Constants.cornerRadius
-        toggleIndicator.backgroundColor = .white
+        toggleIndicator.backgroundColor = AppColors.white
         
         toggleIndicator.snp.makeConstraints { make in
             make.width.equalTo(Constants.indicatorWidth)
@@ -79,13 +79,13 @@ final class CustomToggleView: UIView {
     
     private func setupMeasureLabels(firstText: String, secondText: String) {
         firstMeasure.text = firstText
-        firstMeasure.textColor = Constants.activeColor
-        firstMeasure.font = Constants.labelFont
+        firstMeasure.textColor = AppColors.activeBlack07
+        firstMeasure.font = AppFonts.bold14
         firstMeasure.numberOfLines = 0
         
         secondMeasure.text = secondText
-        secondMeasure.textColor = Constants.inactiveColor
-        secondMeasure.font = Constants.labelFont
+        secondMeasure.textColor = AppColors.textGray56
+        secondMeasure.font = AppFonts.bold14
         secondMeasure.numberOfLines = 0
         
         measureStackView.addArrangedSubview(firstMeasure)
@@ -94,7 +94,7 @@ final class CustomToggleView: UIView {
     
     @objc private func handleTap() {
         isOn.toggle()
-        onToggle?(isOn) // вызывает замыкание onToggle, если оно установлено (не nil), и передает текущее значение isOn.
+        onToggle?(isOn)
     }
     
     private func updateUI(animated: Bool) {
@@ -103,8 +103,8 @@ final class CustomToggleView: UIView {
         let updateBlock = {
             leadingConstraint.update(offset: self.isOn ? Constants.toggleOnOffset : Constants.toggleOffOffset)
             self.grayRectangle.layoutIfNeeded()
-            self.firstMeasure.textColor = self.isOn ? Constants.inactiveColor : Constants.activeColor
-            self.secondMeasure.textColor = self.isOn ? Constants.activeColor : Constants.inactiveColor
+            self.firstMeasure.textColor = self.isOn ? AppColors.textGray56 : AppColors.activeBlack07
+            self.secondMeasure.textColor = self.isOn ? AppColors.activeBlack07 : AppColors.textGray56
         }
         
         if animated {
@@ -113,7 +113,6 @@ final class CustomToggleView: UIView {
             updateBlock()
         }
     }
-    
 }
 
 private extension CustomToggleView {
@@ -127,10 +126,5 @@ private extension CustomToggleView {
         static let cornerRadius: CGFloat = 8
         static let measureStackSpacing: CGFloat = 40
         static let animationDuration: TimeInterval = 0.3
-        static let grayRectangleColor = UIColor(red: 0.13, green: 0.13, blue: 0.13, alpha: 1.00)
-        static let activeColor = UIColor(red: 0.07, green: 0.07, blue: 0.07, alpha: 1.00)
-        static let inactiveColor = UIColor(red: 0.56, green: 0.56, blue: 0.56, alpha: 1.00)
-        static let labelFont = UIFont(name: "LabGrotesque-Bold", size: 14)
     }
 }
-
