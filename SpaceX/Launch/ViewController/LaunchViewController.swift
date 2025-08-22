@@ -50,6 +50,7 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     private func setupTableView() {
         launchView.tableView.dataSource = self
         launchView.tableView.delegate = self
+        launchView.tableView.register(LaunchCell.self, forCellReuseIdentifier: "LaunchCell")
     }
     
     private func setupBackButtonHandler() {
@@ -60,7 +61,7 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     
     private func loadLaunchesData() {
         launchViewModel.loadAllLaunches { [weak self] result in
-            guard let self = self else { return }
+            guard let self else { return }
             
             switch result {
             case .success:
@@ -74,7 +75,7 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     private func fetchFilteredLaunches() {
         launchViewModel.fetchLaunches(rocketId: rocketId) { [weak self] result in
             DispatchQueue.main.async {
-                guard let self = self else { return }
+                guard let self else { return }
                 
                 switch result {
                 case .success(let launches):
@@ -122,10 +123,11 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     }
     
     private func createLaunchCell(for indexPath: IndexPath) -> UITableViewCell {
-        let cell = launchView.tableView.dequeueReusableCell(withIdentifier: "LaunchCell", for: indexPath) as! LaunchCell
+        let cell = launchView.tableView.dequeueReusableCell(withIdentifier: "LaunchCell", for: indexPath)
+        guard let launchCell = cell as? LaunchCell else { return cell}
         let launch = launches[indexPath.row]
-        cell.configure(with: launch)
-        return cell
+        launchCell.configure(with: launch)
+        return launchCell
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
