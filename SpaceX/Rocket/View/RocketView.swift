@@ -86,11 +86,11 @@ final class RocketView: UIView {
         
         enginesCountFirstStage.text = String(rocket.firstStage.engines)
         fuelAmountTonsFirstStage.text = String(rocket.firstStage.fuelAmountTons)
-        burnTimeSECFirstStage.text = String(rocket.firstStage.burnTimeSEC ?? 0)
+        burnTimeSECFirstStage.text = String(rocket.firstStage.burnTimeSec ?? 0)
         
         enginesCountSecondtStage.text = String(rocket.secondStage.engines)
         fuelAmountTonsSecondtStage.text = String(rocket.secondStage.fuelAmountTons)
-        burnTimeSECSecondtStage.text = String(rocket.secondStage.burnTimeSEC ?? 0)
+        burnTimeSECSecondtStage.text = String(rocket.secondStage.burnTimeSec ?? 0)
         
         squareView.configure(with: [
             (metricValue: rocket.height.meters, imperialValue: rocket.height.feet, metricMeasure: "Высота, m", imperialMeasure: "Высота, ft"),
