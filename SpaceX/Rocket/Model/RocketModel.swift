@@ -25,15 +25,7 @@ struct RocketElement: Codable {
     }
     
     var getFirstFlightDate: String {
-        let dateFormatterGet = DateFormatter()
-        dateFormatterGet.dateFormat = "yyyy-MM-dd"
-        let dateFormatterPrint = DateFormatter()
-        dateFormatterPrint.dateFormat = "dd MMM, yyyy"
-        if let date = dateFormatterGet.date(from: firstFlight) {
-            return dateFormatterPrint.string(from: date)
-        } else {
-            return "-"
-        }
+        return firstFlight.formatDate() ?? "-"
     }
 }
 
