@@ -98,7 +98,13 @@ final class SettingsView: UIView {
         }
     }
     
-    private func createHorizontalStack(label: UILabel, firstText: String, secondText: String, initialState: Bool, index: Int) -> UIStackView {
+    private func createHorizontalStack(
+        label: UILabel,
+        firstText: String,
+        secondText: String,
+        initialState: Bool,
+        index: Int
+    ) -> UIStackView {
         let stackView = UIStackView()
         let toggleView = CustomToggleView(firstText: firstText, secondText: secondText, initialState: initialState)
 
