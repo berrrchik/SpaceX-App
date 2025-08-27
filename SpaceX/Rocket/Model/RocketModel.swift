@@ -20,7 +20,7 @@ struct RocketElement: Codable {
     let id: String
     
     var getPayloadWeight: (String, String) {
-        let payloadWeightIsLb = UserDefaults.standard.bool(forKey: "payloadWeightIsLb")
+        let payloadWeightIsLb = UserDefaults.standard.bool(forKey: "isPayloadWeightLb")
         return payloadWeightIsLb ? ("\(payloadWeights[0].lb)", "Полезная нагрузка, lb") : ("\(payloadWeights[0].kg)", "Полезная нагрузка, kg")
     }
     

@@ -7,10 +7,10 @@ extension Notification.Name {
 class SettingsViewModel {
     
     private let userDefaultsKeys = [
-        "heightIsFt",
-        "diameterIsFt",
-        "massIsLb",
-        "payloadWeightIsLb"
+        "isHeightFt",
+        "isDiameterft",
+        "isMassLb",
+        "isPayloadWeightLb"
     ]
     
     private var toggleStates: [Bool]
