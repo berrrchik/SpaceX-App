@@ -18,7 +18,7 @@ final class CustomToggleView: UIView {
     
     var onToggle: ((Bool) -> Void)?
     
-    init(firstText: String, secondText: String, initialState: Bool = false) {
+    init(firstText: String, secondText: String, initialState: Bool = true) {
         self.isOn = initialState
         super.init(frame: .zero)
         setupViews(firstText: firstText, secondText: secondText)
