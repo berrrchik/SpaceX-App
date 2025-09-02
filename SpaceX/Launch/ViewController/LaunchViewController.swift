@@ -4,14 +4,16 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     
     private let rocketId: String
     private let rocketName: String
-    private let launchViewModel = LaunchViewModel()
+    private let launchViewModel: LaunchViewModel
     private let launchView = LaunchView()
     private var launches: [LaunchElement] = []
     private var errorMessage: String?
+    weak var coordinator: AppCoordinator?
     
-    init(rocketId: String, rocketName: String) {
+    init(rocketId: String, rocketName: String, launchViewModel: LaunchViewModel = LaunchViewModel()) {
         self.rocketId = rocketId
         self.rocketName = rocketName
+        self.launchViewModel = launchViewModel
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -55,22 +57,24 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     
     private func setupBackButtonHandler() {
         launchView.onBackButtonTap = { [weak self] in
-            self?.navigationController?.popViewController(animated: true)
+            self?.coordinator?.popViewController()
         }
     }
     
     private func loadLaunchesData() {
-        launchViewModel.loadAllLaunches { [weak self] result in
-            guard let self else { return }
-            
-            switch result {
-            case .success:
-                self.fetchFilteredLaunches()
-            case .failure:
-                self.showError("ОКАК! Что-то пошло не так, проверьте соединение")
+            self.launchViewModel.loadAllLaunches { [weak self] result in
+                guard let self else { return }
+                
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success:
+                        self.fetchFilteredLaunches()
+                    case .failure:
+                        self.showError("ОКАК! Что-то пошло не так, проверьте соединение")
+                    }
+                }
             }
         }
-    }
     
     private func fetchFilteredLaunches() {
         launchViewModel.fetchLaunches(rocketId: rocketId) { [weak self] result in
