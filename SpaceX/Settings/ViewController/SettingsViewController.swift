@@ -4,6 +4,7 @@ class SettingsViewController: UIViewController {
     
     private let settingsView: SettingsView
     private let viewModel = SettingsViewModel()
+    weak var coordinator: AppCoordinator?
     
     init() {
         self.settingsView = SettingsView(viewModel: viewModel)
@@ -29,6 +30,6 @@ class SettingsViewController: UIViewController {
     
     @objc private func closeButtonTapped() {
         settingsView.saveSettings()
-        dismiss(animated: true, completion: nil)
+        coordinator?.dismissViewController(from: self)
     }
 }
