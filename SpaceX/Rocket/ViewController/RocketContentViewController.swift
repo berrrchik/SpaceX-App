@@ -3,6 +3,7 @@ import UIKit
 class RocketContentViewController: UIViewController {
     
     var pageIndex: Int = 0
+    weak var coordinator: AppCoordinator?
     
     let rocketView: RocketView
     private var previousStatusBarHidden = false
@@ -63,9 +64,7 @@ class RocketContentViewController: UIViewController {
     }
     
     @objc private func settingsButtonTapped() {
-        let settingsViewController = SettingsViewController()
-        settingsViewController.modalPresentationStyle = .formSheet
-        present(settingsViewController, animated: true, completion: nil)
+        coordinator?.showSettings(from: self)
     }
     
     private func setupShowLaunchesButtonAction() {
@@ -74,9 +73,7 @@ class RocketContentViewController: UIViewController {
     
     @objc private func showLaunchesButtonTapped() {
         guard let rocket = currentRocket else { return }
-        let launchViewController = LaunchViewController(rocketId: rocket.id, rocketName: rocket.name)
-        self.navigationController?.navigationBar.tintColor = .white
-        navigationController?.pushViewController(launchViewController, animated: true)
+        coordinator?.showLaunches(for: rocket)
     }
 }
 
