@@ -62,13 +62,19 @@ class RocketViewController: UIViewController {
     }
     
     private func fetchData() {
-        rocketViewModel.fetchRockets { [weak self] result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success:
-                    self?.setupPages()
-                case .failure:
-                    print("Error fetching rockets")
+        let loadingViewController = LoadingViewController()
+        loadingViewController.modalPresentationStyle = .overFullScreen
+        present(loadingViewController, animated: false) {
+            self.rocketViewModel.fetchRockets { [weak self] result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success:
+                        self?.setupPages()
+                    case .failure:
+                        print("Error fetching rockets")
+                    }
+                    loadingViewController.dismiss(animated: false)
+                    
                 }
             }
         }
