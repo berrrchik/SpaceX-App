@@ -2,8 +2,8 @@ import UIKit
 
 class LaunchViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
-    private let rocketId: String
-    private let rocketName: String
+    let rocketId: String
+    let rocketName: String
     private let launchViewModel: LaunchViewModel
     private let launchView = LaunchView()
     private var launches: [LaunchElement] = []
@@ -20,7 +20,7 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupViewController()
@@ -29,24 +29,24 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
         loadLaunchesData()
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        navigationController?.navigationBar.barTintColor = nil
-        navigationController?.navigationBar.isTranslucent = true
-    }
-        
-    private func setupViewController() {
-        view = launchView
-        launchView.backgroundColor = AppColors.black
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
+        navigationItem.title = rocketName
         
         let backButton = UIBarButtonItem()
         backButton.title = "Назад"
-        navigationController?.navigationBar.topItem?.backBarButtonItem = backButton
-        
-        navigationItem.title = rocketName
-        navigationController?.navigationBar.barTintColor = AppColors.black
-        navigationController?.navigationBar.isTranslucent = false
-        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: AppColors.white]
+        backButton.tintColor = .white
+        navigationItem.backBarButtonItem = backButton
+    }
+    
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
+    }
+    
+    private func setupViewController() {
+        view = launchView
+        launchView.backgroundColor = AppColors.black
     }
     
     private func setupTableView() {
@@ -62,19 +62,18 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     }
     
     private func loadLaunchesData() {
-            self.launchViewModel.loadAllLaunches { [weak self] result in
-                guard let self else { return }
-                
-                DispatchQueue.main.async {
-                    switch result {
-                    case .success:
-                        self.fetchFilteredLaunches()
-                    case .failure:
-                        self.showError("ОКАК! Что-то пошло не так, проверьте соединение")
-                    }
+        self.launchViewModel.loadAllLaunches { [weak self] result in
+            guard let self else { return }
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    self.fetchFilteredLaunches()
+                case .failure:
+                    self.showError("ОКАК! Что-то пошло не так, проверьте соединение")
                 }
             }
         }
+    }
     
     private func fetchFilteredLaunches() {
         launchViewModel.fetchLaunches(rocketId: rocketId) { [weak self] result in
@@ -128,7 +127,7 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     
     private func createLaunchCell(for indexPath: IndexPath) -> UITableViewCell {
         let cell = launchView.tableView.dequeueReusableCell(withIdentifier: "LaunchCell", for: indexPath)
-        guard let launchCell = cell as? LaunchCell else { return cell}
+        guard let launchCell = cell as? LaunchCell else { return cell }
         let launch = launches[indexPath.row]
         launchCell.configure(with: launch)
         return launchCell
