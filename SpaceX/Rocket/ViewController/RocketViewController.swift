@@ -24,6 +24,15 @@ class RocketViewController: UIViewController {
         fetchData()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
+    
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
+    }
+    
     private func setupUI() {
         addChild(pageViewController)
         view.addSubview(pageViewController.view)
@@ -74,7 +83,6 @@ class RocketViewController: UIViewController {
                         print("Error fetching rockets")
                     }
                     loadingViewController.dismiss(animated: false)
-                    
                 }
             }
         }
@@ -88,6 +96,7 @@ class RocketViewController: UIViewController {
             let vc = RocketContentViewController()
             vc.configure(with: rocket)
             vc.coordinator = self.coordinator
+            vc.pageIndex = index
             return vc
         }
         
@@ -108,7 +117,7 @@ class RocketViewController: UIViewController {
     }
 }
 
-extension RocketViewController: UIPageViewControllerDataSource {
+extension RocketViewController: UIPageViewControllerDataSource, UIPageViewControllerDelegate {
     func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {
         guard let currentVC = viewController as? RocketContentViewController,
               let index = rocketViewControllers.firstIndex(of: currentVC),
@@ -122,9 +131,7 @@ extension RocketViewController: UIPageViewControllerDataSource {
               index < rocketViewControllers.count - 1 else { return nil }
         return rocketViewControllers[index + 1]
     }
-}
-
-extension RocketViewController: UIPageViewControllerDelegate {
+    
     func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
         guard let currentVC = pageViewController.viewControllers?.first as? RocketContentViewController,
               let index = rocketViewControllers.firstIndex(of: currentVC) else { return }
