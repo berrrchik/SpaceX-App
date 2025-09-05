@@ -6,7 +6,7 @@ protocol Coordinator: AnyObject {
 
 class AppCoordinator: Coordinator {
     private let window: UIWindow
-    private let navigationController: UINavigationController
+    let navigationController: UINavigationController
     private let rocketViewModel: RocketViewModel
     private let launchViewModel: LaunchViewModel
     
@@ -15,6 +15,8 @@ class AppCoordinator: Coordinator {
         self.navigationController = UINavigationController()
         self.rocketViewModel = RocketViewModel()
         self.launchViewModel = LaunchViewModel()
+        
+        setupNavigationController()
     }
     
     func start() {
@@ -25,17 +27,38 @@ class AppCoordinator: Coordinator {
         window.makeKeyAndVisible()
     }
     
+    private func setupNavigationController() {
+        navigationController.navigationBar.barStyle = .black
+        navigationController.navigationBar.tintColor = .white
+        navigationController.navigationBar.titleTextAttributes = [
+            .foregroundColor: UIColor.white,
+            .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
+        ]
+        
+        let backButtonAppearance = UIBarButtonItemAppearance()
+        backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.white]
+        
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = AppColors.black
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        appearance.backButtonAppearance = backButtonAppearance
+        
+        navigationController.navigationBar.standardAppearance = appearance
+        navigationController.navigationBar.scrollEdgeAppearance = appearance
+        navigationController.navigationBar.compactAppearance = appearance
+    }
+    
     func showSettings(from viewController: UIViewController) {
         let settingsViewController = SettingsViewController()
         settingsViewController.coordinator = self
         settingsViewController.modalPresentationStyle = .formSheet
-        viewController.present(settingsViewController, animated: true, completion: nil)
+        viewController.present(settingsViewController, animated: true)
     }
     
     func showLaunches(for rocket: RocketElement) {
         let launchViewController = LaunchViewController(rocketId: rocket.id, rocketName: rocket.name, launchViewModel: launchViewModel)
         launchViewController.coordinator = self
-        navigationController.navigationBar.tintColor = .white
         navigationController.pushViewController(launchViewController, animated: true)
     }
     
@@ -44,6 +67,10 @@ class AppCoordinator: Coordinator {
     }
     
     func dismissViewController(from viewController: UIViewController) {
-        viewController.dismiss(animated: true, completion: nil)
+        viewController.dismiss(animated: true)
+    }
+    
+    func updateStatusBarStyle(for viewController: UIViewController) {
+        viewController.setNeedsStatusBarAppearanceUpdate()
     }
 }
