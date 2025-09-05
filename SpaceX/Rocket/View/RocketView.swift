@@ -82,7 +82,7 @@ final class RocketView: UIView {
         
         firstFlight.text = rocket.getFirstFlightDate
         country.text = rocket.country
-        costPerLaunch.text = String(rocket.costPerLaunch)
+        costPerLaunch.text = rocket.costPerLaunch.roundedWithAbbreviations
         
         enginesCountFirstStage.text = String(rocket.firstStage.engines)
         fuelAmountTonsFirstStage.text = String(rocket.firstStage.fuelAmountTons)
