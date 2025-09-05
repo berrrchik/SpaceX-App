@@ -33,11 +33,6 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(false, animated: animated)
         navigationItem.title = rocketName
-        
-        let backButton = UIBarButtonItem()
-        backButton.title = "Назад"
-        backButton.tintColor = .white
-        navigationItem.backBarButtonItem = backButton
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {

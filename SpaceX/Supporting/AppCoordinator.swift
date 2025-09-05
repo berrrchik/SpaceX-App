@@ -59,6 +59,12 @@ class AppCoordinator: Coordinator {
     func showLaunches(for rocket: RocketElement) {
         let launchViewController = LaunchViewController(rocketId: rocket.id, rocketName: rocket.name, launchViewModel: launchViewModel)
         launchViewController.coordinator = self
+        
+        let backButton = UIBarButtonItem()
+        backButton.title = "Назад"
+        backButton.tintColor = .white
+        navigationController.topViewController?.navigationItem.backBarButtonItem = backButton
+        
         navigationController.pushViewController(launchViewController, animated: true)
     }
     
