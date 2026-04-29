@@ -1,4 +1,3 @@
-import Alamofire
 import Foundation
 import OSLog
 
@@ -8,85 +7,56 @@ class LaunchService: LaunchServiceProtocol {
         category: "LaunchService"
     )
 
-    private let endpoint = "https://api.spacexdata.com/v4/launches/query"
+    private let httpClient: HTTPClient
     private let pageSize = 20
-    private let maxRetryCount = 1
+
+    convenience init() {
+        let builder = RequestBuilder(baseURL: URL(string: "https://api.spacexdata.com")!)
+        let client = URLSessionHTTPClient(requestBuilder: builder)
+        self.init(httpClient: client)
+    }
+
+    init(httpClient: HTTPClient) {
+        self.httpClient = httpClient
+    }
 
     func fetchLaunchPage(
         for rocketId: String,
         page: Int,
         completion: @escaping (Result<LaunchPage, any Error>) -> Void
     ) {
-        fetchLaunchPage(for: rocketId, page: page, retryCount: 0, completion: completion)
-    }
-
-    private func fetchLaunchPage(
-        for rocketId: String,
-        page: Int,
-        retryCount: Int,
-        completion: @escaping (Result<LaunchPage, any Error>) -> Void
-    ) {
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
         let startedAt = Date()
 
-        let request = LaunchQueryRequest(
-            query: LaunchQuery(rocket: rocketId),
-            options: LaunchQueryOptions(
-                pagination: true,
-                limit: pageSize,
-                page: page,
-                sort: ["date_utc": "desc"],
-                select: ["name", "date_utc", "success", "rocket"]
-            )
-        )
+        Self.logger.debug("Starting launches query request for rocket id=\(rocketId, privacy: .public) page=\(page, privacy: .public) limit=\(self.pageSize, privacy: .public)")
 
-        Self.logger.debug("Starting launches query request to \(self.endpoint, privacy: .public) for rocket id=\(rocketId, privacy: .public) page=\(page, privacy: .public) limit=\(self.pageSize, privacy: .public)")
+        let endpoint = LaunchesQueryEndpoint(rocketID: rocketId, page: page, limit: pageSize)
 
-        AF.request(
-            endpoint,
-            method: .post,
-            parameters: request,
-            encoder: JSONParameterEncoder.default
-        )
-        .validate()
-        .responseDecodable(of: LaunchQueryResponse.self, decoder: decoder) { response in
-            let duration = Date().timeIntervalSince(startedAt)
-            let statusCode = response.response?.statusCode ?? -1
-            let dataSize = response.data?.count ?? 0
+        Task {
+            do {
+                let launchResponse = try await self.httpClient.send(endpoint)
+                let duration = Date().timeIntervalSince(startedAt)
 
-            switch response.result {
-            case .success(let launchResponse):
                 Self.logger.debug(
-                    "Launches query page succeeded. rocket id=\(rocketId, privacy: .public) page=\(page, privacy: .public) status=\(statusCode, privacy: .public) duration=\(duration, privacy: .public)s bytes=\(dataSize, privacy: .public) pageCount=\(launchResponse.docs.count, privacy: .public) hasNext=\(launchResponse.hasNextPage, privacy: .public)"
-                )
-                completion(
-                    .success(
-                        LaunchPage(
-                            launches: launchResponse.docs,
-                            hasNextPage: launchResponse.hasNextPage,
-                            nextPage: launchResponse.nextPage
-                        )
-                    )
+                    "Launches query page succeeded. rocket id=\(rocketId, privacy: .public) page=\(page, privacy: .public) duration=\(duration, privacy: .public)s pageCount=\(launchResponse.docs.count, privacy: .public) hasNext=\(launchResponse.hasNextPage, privacy: .public)"
                 )
 
-            case .failure(let error):
-                Self.logger.error(
-                    "Launches query page failed. rocket id=\(rocketId, privacy: .public) page=\(page, privacy: .public) status=\(statusCode, privacy: .public) duration=\(duration, privacy: .public)s bytes=\(dataSize, privacy: .public) retry=\(retryCount, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
+                let launchPage = LaunchPage(
+                    launches: launchResponse.docs,
+                    hasNextPage: launchResponse.hasNextPage,
+                    nextPage: launchResponse.nextPage
                 )
 
-                guard retryCount < self.maxRetryCount else {
-                    completion(.failure(error))
-                    return
+                DispatchQueue.main.async {
+                    completion(.success(launchPage))
                 }
-
-                Self.logger.debug("Retrying launches query page for rocket id=\(rocketId, privacy: .public) page=\(page, privacy: .public)")
-                self.fetchLaunchPage(
-                    for: rocketId,
-                    page: page,
-                    retryCount: retryCount + 1,
-                    completion: completion
+            } catch {
+                let duration = Date().timeIntervalSince(startedAt)
+                Self.logger.error(
+                    "Launches query page failed. rocket id=\(rocketId, privacy: .public) page=\(page, privacy: .public) duration=\(duration, privacy: .public)s error=\(error.localizedDescription, privacy: .public)"
                 )
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
             }
         }
     }
@@ -113,4 +83,30 @@ private struct LaunchQueryResponse: Decodable {
     let docs: [LaunchElement]
     let hasNextPage: Bool
     let nextPage: Int?
+}
+
+private struct LaunchesQueryEndpoint: APIEndpoint {
+    typealias Response = LaunchQueryResponse
+
+    let path = "v4/launches/query"
+    let method: HTTPMethod = .post
+    let body: Data?
+    let headers: [String: String] = [
+        "Content-Type": "application/json"
+    ]
+    let cachePolicy: HTTPCachePolicy = .reloadIgnoringLocalCacheData
+
+    init(rocketID: String, page: Int, limit: Int) {
+        let request = LaunchQueryRequest(
+            query: LaunchQuery(rocket: rocketID),
+            options: LaunchQueryOptions(
+                pagination: true,
+                limit: limit,
+                page: page,
+                sort: ["date_utc": "desc"],
+                select: ["name", "date_utc", "success", "rocket"]
+            )
+        )
+        self.body = try? JSONEncoder().encode(request)
+    }
 }
