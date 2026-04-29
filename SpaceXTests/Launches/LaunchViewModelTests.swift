@@ -144,6 +144,75 @@ final class LaunchViewModelTests: XCTestCase {
         wait(for: [expectation], timeout: 1)
     }
 
+    func testLoadNextPageIfNeededCanSucceedAfterTransientFailureOnRetry() {
+        let service = StubLaunchService(
+            responsesByPage: [
+                1: .success(
+                    LaunchPage(
+                        launches: Self.makeLaunches(prefix: "Page1", count: 20, rocketId: "rocket-1", dayOffset: 0),
+                        hasNextPage: true,
+                        nextPage: 2
+                    )
+                )
+            ]
+        )
+        service.setSequentialResponses(
+            for: 2,
+            responses: [
+                .failure(TestError.transient),
+                .success(
+                    LaunchPage(
+                        launches: Self.makeLaunches(prefix: "Page2", count: 2, rocketId: "rocket-1", dayOffset: 20),
+                        hasNextPage: false,
+                        nextPage: nil
+                    )
+                ),
+            ]
+        )
+
+        let viewModel = LaunchViewModel(launchApiService: service)
+        let initialExpectation = expectation(description: "Initial page loaded")
+        let firstAttemptExpectation = expectation(description: "First next-page attempt fails")
+        let retryExpectation = expectation(description: "Retry next-page attempt succeeds")
+
+        viewModel.fetchInitialLaunches(rocketId: "rocket-1") { result in
+            if case .failure(let error) = result {
+                XCTFail("Expected success, got \(error)")
+            }
+            initialExpectation.fulfill()
+        }
+        wait(for: [initialExpectation], timeout: 1)
+
+        viewModel.loadNextPageIfNeeded(rocketId: "rocket-1", currentIndex: 15) { result in
+            switch result {
+            case .success:
+                XCTFail("Expected transient failure on first next-page attempt")
+            case .failure:
+                XCTAssertEqual(viewModel.numberOfLaunches(for: "rocket-1"), 20)
+                XCTAssertTrue(viewModel.hasNextPage(for: "rocket-1"))
+                XCTAssertFalse(viewModel.isLoadingPage(for: "rocket-1"))
+            }
+            firstAttemptExpectation.fulfill()
+        }
+        wait(for: [firstAttemptExpectation], timeout: 1)
+
+        viewModel.loadNextPageIfNeeded(rocketId: "rocket-1", currentIndex: 15) { result in
+            switch result {
+            case .success(let launches):
+                XCTAssertEqual(launches.count, 22)
+                XCTAssertEqual(viewModel.numberOfLaunches(for: "rocket-1"), 22)
+                XCTAssertFalse(viewModel.hasNextPage(for: "rocket-1"))
+                XCTAssertFalse(viewModel.isLoadingPage(for: "rocket-1"))
+            case .failure(let error):
+                XCTFail("Expected success on retry, got \(error)")
+            }
+            retryExpectation.fulfill()
+        }
+        wait(for: [retryExpectation], timeout: 1)
+
+        XCTAssertEqual(service.requestedPages, [1, 2, 2])
+    }
+
     private static func makeLaunches(prefix: String, count: Int, rocketId: String, dayOffset: Int) -> [LaunchElement] {
         (0..<count).map { index in
             let day = String(format: "%02d", index + 1 + dayOffset)
@@ -159,10 +228,18 @@ final class LaunchViewModelTests: XCTestCase {
 
 private final class StubLaunchService: LaunchServiceProtocol {
     let responsesByPage: [Int: Result<LaunchPage, Error>]
+    private var sequentialResponsesByPage: [Int: [Result<LaunchPage, Error>]] = [:]
     private(set) var requestedPages: [Int] = []
 
     init(responsesByPage: [Int: Result<LaunchPage, Error>]) {
         self.responsesByPage = responsesByPage
+    }
+
+    func setSequentialResponses(
+        for page: Int,
+        responses: [Result<LaunchPage, Error>]
+    ) {
+        sequentialResponsesByPage[page] = responses
     }
 
     func fetchLaunchPage(
@@ -171,10 +248,18 @@ private final class StubLaunchService: LaunchServiceProtocol {
         completion: @escaping (Result<LaunchPage, Error>) -> Void
     ) {
         requestedPages.append(page)
+        if var sequential = sequentialResponsesByPage[page], !sequential.isEmpty {
+            let nextResult = sequential.removeFirst()
+            sequentialResponsesByPage[page] = sequential
+            completion(nextResult)
+            return
+        }
+
         completion(responsesByPage[page] ?? .failure(TestError.missingResponse))
     }
 }
 
 private enum TestError: Error {
     case missingResponse
+    case transient
 }
