@@ -1,31 +1,34 @@
 import Foundation
 
 class RocketViewModel {
-    private let rocketApiService: RocketServiceProtocol
-    private var rockets: [RocketElement] = []
+    private let rocketRepository: RocketRepositoryProtocol
+    private var rockets: [Rocket] = []
     
     var numberOfRockets: Int {
         return rockets.count
     }
     
-    init(rocketApiService: RocketServiceProtocol = RocketService()) {
-        self.rocketApiService = rocketApiService
+    init(rocketRepository: RocketRepositoryProtocol) {
+        self.rocketRepository = rocketRepository
     }
     
-    func rocket(at index: Int) -> RocketElement? {
-        guard index < rockets.count else {return nil}
+    func rocket(at index: Int) -> Rocket? {
+        guard index < rockets.count else { return nil }
         return rockets[index]
     }
     
     func fetchRockets(completion: @escaping (Result<Void, Error>) -> Void) {
-        rocketApiService.fetchRockets { [weak self] result in
-            switch result {
-            case .success(let rockets):
-                self?.rockets = rockets
-                completion(.success(()))
-            case .failure(let error):
-                print("Ошибка при загрузке данных")
-                completion(.failure(error))
+        Task {
+            do {
+                let rockets = try await rocketRepository.fetchRockets()
+                DispatchQueue.main.async { [weak self] in
+                    self?.rockets = rockets
+                    completion(.success(()))
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
             }
         }
     }

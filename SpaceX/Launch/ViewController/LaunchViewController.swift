@@ -11,13 +11,13 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     let rocketName: String
     private let launchViewModel: LaunchViewModel
     private let launchView = LaunchView()
-    private var launches: [LaunchElement] = []
+    private var launches: [Launch] = []
     private var errorMessage: String?
     private var hasRequestedInitialLoad = false
     private let paginationIndicator = UIActivityIndicatorView(style: .medium)
     weak var coordinator: AppCoordinating?
     
-    init(rocketId: String, rocketName: String, launchViewModel: LaunchViewModel = LaunchViewModel()) {
+    init(rocketId: String, rocketName: String, launchViewModel: LaunchViewModel) {
         self.rocketId = rocketId
         self.rocketName = rocketName
         self.launchViewModel = launchViewModel

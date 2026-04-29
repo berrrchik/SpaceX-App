@@ -7,27 +7,27 @@ class LaunchViewModel {
         category: "LaunchViewModel"
     )
 
-    private let launchApiService: LaunchServiceProtocol
+    private let launchRepository: LaunchRepositoryProtocol
     private var statesByRocketId: [String: LaunchPaginationState] = [:]
     
-    init(launchApiService: LaunchServiceProtocol = LaunchService()) {
-        self.launchApiService = launchApiService
+    init(launchRepository: LaunchRepositoryProtocol) {
+        self.launchRepository = launchRepository
     }
     
     func numberOfLaunches(for rocketId: String) -> Int {
         state(for: rocketId).launches.count
     }
     
-    func launch(at index: Int, for rocketId: String) -> LaunchElement? {
+    func launch(at index: Int, for rocketId: String) -> Launch? {
         let sortedLaunches = state(for: rocketId).launches
         
-        guard index < sortedLaunches.count else {return nil}
+        guard index < sortedLaunches.count else { return nil }
         return sortedLaunches[index]
     }
     
     func fetchInitialLaunches(
         rocketId: String,
-        completion: @escaping (Result<[LaunchElement], Error>) -> Void
+        completion: @escaping (Result<[Launch], Error>) -> Void
     ) {
         let state = state(for: rocketId)
         Self.logger.debug("Fetching initial launches for rocket id=\(rocketId, privacy: .public). cachedCount=\(state.launches.count, privacy: .public) hasNext=\(state.hasNextPage, privacy: .public)")
@@ -43,7 +43,7 @@ class LaunchViewModel {
     func loadNextPageIfNeeded(
         rocketId: String,
         currentIndex: Int,
-        completion: @escaping (Result<[LaunchElement], Error>) -> Void
+        completion: @escaping (Result<[Launch], Error>) -> Void
     ) {
         let state = state(for: rocketId)
         let thresholdIndex = max(state.launches.count - 5, 0)
@@ -72,7 +72,7 @@ class LaunchViewModel {
         for rocketId: String,
         page: Int,
         reset: Bool,
-        completion: @escaping (Result<[LaunchElement], Error>) -> Void
+        completion: @escaping (Result<[Launch], Error>) -> Void
     ) {
         var launchState = state(for: rocketId)
         launchState.isLoadingPage = true
@@ -80,29 +80,43 @@ class LaunchViewModel {
 
         Self.logger.debug("Starting launch page fetch for rocket id=\(rocketId, privacy: .public) page=\(page, privacy: .public) reset=\(reset, privacy: .public)")
 
-        launchApiService.fetchLaunchPage(for: rocketId, page: page) { [weak self] result in
-            guard let self else { return }
-
-            var updatedState = self.state(for: rocketId)
-            updatedState.isLoadingPage = false
-
-            switch result {
-            case .success(let pageResult):
-                let mergedLaunches = reset ? pageResult.launches : (updatedState.launches + pageResult.launches)
-                updatedState.launches = mergedLaunches.sorted { $0.dateUtc > $1.dateUtc }
-                updatedState.hasNextPage = pageResult.hasNextPage
-                updatedState.nextPage = pageResult.nextPage
-                self.statesByRocketId[rocketId] = updatedState
-
-                Self.logger.debug(
-                    "Launch page fetch succeeded for rocket id=\(rocketId, privacy: .public) page=\(page, privacy: .public) totalLaunches=\(updatedState.launches.count, privacy: .public) hasNext=\(updatedState.hasNextPage, privacy: .public) nextPage=\(String(describing: updatedState.nextPage), privacy: .public)"
-                )
-                completion(.success(updatedState.launches))
-
-            case .failure(let error):
-                self.statesByRocketId[rocketId] = updatedState
-                Self.logger.error("Launch page fetch failed for rocket id=\(rocketId, privacy: .public) page=\(page, privacy: .public): \(error.localizedDescription, privacy: .public)")
-                completion(.failure(error))
+        Task {
+            do {
+                let pageResult: LaunchPageResult
+                if page == 1 {
+                    pageResult = try await launchRepository.fetchInitialLaunches(for: rocketId)
+                } else {
+                    pageResult = try await launchRepository.fetchNextLaunchPage(for: rocketId, page: page)
+                }
+                
+                DispatchQueue.main.async { [weak self] in
+                    guard let self else { return }
+                    
+                    var updatedState = self.state(for: rocketId)
+                    updatedState.isLoadingPage = false
+                    
+                    let mergedLaunches = reset ? pageResult.launches : (updatedState.launches + pageResult.launches)
+                    updatedState.launches = mergedLaunches.sorted { $0.dateUtc > $1.dateUtc }
+                    updatedState.hasNextPage = pageResult.hasNextPage
+                    updatedState.nextPage = pageResult.nextPage
+                    self.statesByRocketId[rocketId] = updatedState
+                    
+                    Self.logger.debug(
+                        "Launch page fetch succeeded for rocket id=\(rocketId, privacy: .public) page=\(page, privacy: .public) totalLaunches=\(updatedState.launches.count, privacy: .public) hasNext=\(updatedState.hasNextPage, privacy: .public) nextPage=\(String(describing: updatedState.nextPage), privacy: .public)"
+                    )
+                    completion(.success(updatedState.launches))
+                }
+            } catch {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self else { return }
+                    
+                    var updatedState = self.state(for: rocketId)
+                    updatedState.isLoadingPage = false
+                    self.statesByRocketId[rocketId] = updatedState
+                    
+                    Self.logger.error("Launch page fetch failed for rocket id=\(rocketId, privacy: .public) page=\(page, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                    completion(.failure(error))
+                }
             }
         }
     }
@@ -113,7 +127,7 @@ class LaunchViewModel {
 }
 
 private struct LaunchPaginationState {
-    var launches: [LaunchElement] = []
+    var launches: [Launch] = []
     var nextPage: Int? = 1
     var hasNextPage = true
     var isLoadingPage = false

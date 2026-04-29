@@ -7,7 +7,7 @@ protocol Coordinator: AnyObject {
 
 protocol AppCoordinating: AnyObject {
     func showSettings(from viewController: UIViewController)
-    func showLaunches(for rocket: RocketElement)
+    func showLaunches(for rocket: Rocket)
     func popViewController()
     func dismissViewController(from viewController: UIViewController)
     func showLoading(from presenter: UIViewController)
@@ -74,7 +74,7 @@ class AppCoordinator: Coordinator {
         viewController.present(settingsViewController, animated: true)
     }
     
-    func showLaunches(for rocket: RocketElement) {
+    func showLaunches(for rocket: Rocket) {
         Self.logger.debug("Navigating to launches for rocket id=\(rocket.id, privacy: .public) name=\(rocket.name, privacy: .public)")
         let launchViewController = LaunchViewController(
             rocketId: rocket.id,

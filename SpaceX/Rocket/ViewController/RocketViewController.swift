@@ -16,7 +16,7 @@ class RocketViewController: UIViewController {
     weak var coordinator: AppCoordinating?
     
     init(
-        rocketViewModel: RocketViewModel = RocketViewModel(),
+        rocketViewModel: RocketViewModel,
         settingsStore: SettingsStore
     ) {
         self.rocketViewModel = rocketViewModel

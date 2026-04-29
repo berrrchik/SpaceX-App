@@ -62,7 +62,7 @@ final class RocketView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(with rocket: RocketElement, imageURL: URL?) {
+    func configure(with rocket: Rocket, imageURL: URL?) {
         self.imageURL = imageURL
         
         if let imageURL = imageURL {
@@ -80,7 +80,7 @@ final class RocketView: UIView {
         
         rocketNameLabel.text = rocket.name
         
-        firstFlight.text = rocket.getFirstFlightDate
+        firstFlight.text = rocket.firstFlightDate
         country.text = rocket.country
         costPerLaunch.text = rocket.costPerLaunch.roundedWithAbbreviations
         

@@ -17,9 +17,9 @@ final class LaunchCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(with launch: LaunchElement) {
+    func configure(with launch: Launch) {
         nameLabel.text = launch.name
-        dateLabel.text = launch.getDateUTC
+        dateLabel.text = launch.formattedDate
         
         if let success = launch.success {
             statusImageView.image = UIImage(named: success ? "LaunchSuccess" : "LaunchFail")
