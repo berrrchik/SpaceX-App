@@ -19,10 +19,12 @@ final class AppContainer {
         return URLSession(configuration: configuration)
     }()
     lazy var httpClient: HTTPClient = URLSessionHTTPClient(session: urlSession, requestBuilder: requestBuilder)
-    lazy var rocketService: RocketServiceProtocol = RocketService(httpClient: httpClient)
-    lazy var launchService: LaunchServiceProtocol = LaunchService(httpClient: httpClient)
-    lazy var rocketViewModel = RocketViewModel(rocketApiService: rocketService)
-    lazy var launchViewModel = LaunchViewModel(launchApiService: launchService)
+    lazy var rocketRemoteDataSource: RocketRemoteDataSourceProtocol = RocketRemoteDataSource(httpClient: httpClient)
+    lazy var launchRemoteDataSource: LaunchRemoteDataSourceProtocol = LaunchRemoteDataSource(httpClient: httpClient)
+    lazy var rocketRepository: RocketRepositoryProtocol = RocketRepository(remoteDataSource: rocketRemoteDataSource)
+    lazy var launchRepository: LaunchRepositoryProtocol = LaunchRepository(remoteDataSource: launchRemoteDataSource)
+    lazy var rocketViewModel = RocketViewModel(rocketRepository: rocketRepository)
+    lazy var launchViewModel = LaunchViewModel(launchRepository: launchRepository)
 
     init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
