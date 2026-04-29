@@ -13,8 +13,8 @@ final class RocketView: UIView {
     private let headerView = RocketHeaderView()
     private let metricsView = RocketMetricsCarouselView()
     private let overviewView = RocketOverviewSectionView()
-    private let firstStageView = RocketStageSectionView(title: "ПЕРВАЯ СТУПЕНЬ")
-    private let secondStageView = RocketStageSectionView(title: "ВТОРАЯ СТУПЕНЬ")
+    private let firstStageView = RocketStageSectionView(title: L10n.rocketFirstStage)
+    private let secondStageView = RocketStageSectionView(title: L10n.rocketSecondStage)
     private let footerView = RocketActionFooterView()
 
     var settingsButton: UIButton { headerView.settingsButton }
@@ -46,10 +46,10 @@ final class RocketView: UIView {
         headerView.configure(title: displayModel.name)
 
         metricsView.configure(items: [
-            (value: displayModel.heightValue, unit: displayModel.heightUnit, label: "Высота"),
-            (value: displayModel.diameterValue, unit: displayModel.diameterUnit, label: "Диаметр"),
-            (value: displayModel.massValue, unit: displayModel.massUnit, label: "Масса"),
-            (value: displayModel.payloadWeightValue, unit: displayModel.payloadWeightUnit, label: "Полезная нагрузка")
+            (value: displayModel.heightValue, unit: displayModel.heightUnit, label: L10n.settingsHeight),
+            (value: displayModel.diameterValue, unit: displayModel.diameterUnit, label: L10n.settingsDiameter),
+            (value: displayModel.massValue, unit: displayModel.massUnit, label: L10n.settingsMass),
+            (value: displayModel.payloadWeightValue, unit: displayModel.payloadWeightUnit, label: L10n.settingsPayload)
         ])
 
         overviewView.configure(

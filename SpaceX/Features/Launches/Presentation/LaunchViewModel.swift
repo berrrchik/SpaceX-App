@@ -1,11 +1,7 @@
 import Foundation
-import OSLog
 
 class LaunchViewModel {
-    private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "SpaceX",
-        category: "LaunchViewModel"
-    )
+    private static let logger = AppLogger.make("LaunchViewModel")
 
     private let launchRepository: LaunchRepositoryProtocol
     private var statesByRocketId: [String: LaunchPaginationState] = [:]

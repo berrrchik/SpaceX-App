@@ -1,5 +1,4 @@
 import UIKit
-import OSLog
 
 protocol Coordinator: AnyObject {
     func start()
@@ -16,10 +15,7 @@ protocol AppCoordinating: AnyObject {
 }
 
 class AppCoordinator: Coordinator {
-    private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "SpaceX",
-        category: "AppCoordinator"
-    )
+    private static let logger = AppLogger.make("AppCoordinator")
 
     private let window: UIWindow
     private let appContainer: AppContainer
@@ -86,7 +82,7 @@ class AppCoordinator: Coordinator {
         launchViewController.coordinator = self
         
         let backButton = UIBarButtonItem()
-        backButton.title = "Назад"
+        backButton.title = L10n.navigationBack
         backButton.tintColor = .white
         navigationController.topViewController?.navigationItem.backBarButtonItem = backButton
         

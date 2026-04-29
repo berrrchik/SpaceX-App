@@ -8,7 +8,7 @@ final class RocketActionFooterView: UIView {
         super.init(frame: frame)
         addSubview(actionButton)
 
-        actionButton.setTitle("Посмотреть запуски", for: .normal)
+        actionButton.setTitle(L10n.rocketShowLaunches, for: .normal)
         actionButton.titleLabel?.font = AppFonts.bold18
         actionButton.tintColor = AppColors.buttonTint96
         actionButton.backgroundColor = AppColors.buttonBackgroundGray

@@ -1,11 +1,7 @@
 import UIKit
-import OSLog
 
 class LaunchViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
-    private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "SpaceX",
-        category: "LaunchViewController"
-    )
+    private static let logger = AppLogger.make("LaunchViewController")
     
     let rocketId: String
     let rocketName: String
@@ -129,11 +125,11 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     
     private func showErrorAlert(_ message: String) {
         let alert = UIAlertController(
-            title: "Ошибка",
+            title: L10n.alertErrorTitle,
             message: message,
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        alert.addAction(UIAlertAction(title: L10n.alertOk, style: .default))
         present(alert, animated: true)
     }
 
@@ -169,7 +165,7 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         switch currentState {
         case .empty:
-            return createErrorCell(with: "Нет данных о запуске этой ракеты")
+            return createErrorCell(with: L10n.launchesNoData)
         case .error(let message):
             return createErrorCell(with: message)
         default:

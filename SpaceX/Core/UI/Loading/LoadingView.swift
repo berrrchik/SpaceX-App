@@ -29,7 +29,7 @@ final class LoadingView: UIView {
             make.centerY.equalToSuperview().offset(-20)
         }
         
-        loadingLabel.text = "Загрузка данных..."
+        loadingLabel.text = L10n.loadingData
         loadingLabel.font = AppFonts.regular20
         loadingLabel.textAlignment = .center
         loadingLabel.textColor = AppColors.lightGray

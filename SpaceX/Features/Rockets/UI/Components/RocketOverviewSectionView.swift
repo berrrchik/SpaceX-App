@@ -31,9 +31,9 @@ final class RocketOverviewSectionView: UIView {
             make.edges.equalToSuperview()
         }
 
-        stackView.addArrangedSubview(makeRow(title: "Первый запуск", valueLabel: firstFlightValue))
-        stackView.addArrangedSubview(makeRow(title: "Страна", valueLabel: countryValue))
-        stackView.addArrangedSubview(makeRow(title: "Стоимость запуска", valueLabel: costValue))
+        stackView.addArrangedSubview(makeRow(title: L10n.rocketFirstFlight, valueLabel: firstFlightValue))
+        stackView.addArrangedSubview(makeRow(title: L10n.rocketCountry, valueLabel: countryValue))
+        stackView.addArrangedSubview(makeRow(title: L10n.rocketCostPerLaunch, valueLabel: costValue))
     }
 
     private func makeRow(title: String, valueLabel: UILabel) -> UIStackView {

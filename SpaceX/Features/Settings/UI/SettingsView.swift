@@ -34,7 +34,7 @@ final class SettingsView: UIView {
 
     private func setupSettingsLabel() {
         addSubview(settingsLabel)
-        settingsLabel.text = "Настройки"
+        settingsLabel.text = L10n.settingsTitle
         settingsLabel.textColor = AppColors.white
         settingsLabel.numberOfLines = 0
         settingsLabel.font = AppFonts.medium16
@@ -47,7 +47,7 @@ final class SettingsView: UIView {
 
     private func setupCloseButton() {
         addSubview(closeButton)
-        closeButton.setTitle("Закрыть", for: .normal)
+        closeButton.setTitle(L10n.settingsClose, for: .normal)
         closeButton.setTitleColor(AppColors.white, for: .normal)
         closeButton.titleLabel?.font = AppFonts.bold16
 
@@ -63,10 +63,10 @@ final class SettingsView: UIView {
             $0.font = AppFonts.medium16
         }
 
-        heightLabel.text = "Высота"
-        diameterLabel.text = "Диаметр"
-        massLabel.text = "Масса"
-        payloadWeightsLabel.text = "Полезная нагрузка"
+        heightLabel.text = L10n.settingsHeight
+        diameterLabel.text = L10n.settingsDiameter
+        massLabel.text = L10n.settingsMass
+        payloadWeightsLabel.text = L10n.settingsPayload
     }
 
     private func setupLabelStackView(toggleStates: [Bool]) {

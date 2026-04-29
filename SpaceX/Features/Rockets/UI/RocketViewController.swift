@@ -1,11 +1,7 @@
 import UIKit
-import OSLog
 
 class RocketViewController: UIViewController {
-    private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "SpaceX",
-        category: "RocketViewController"
-    )
+    private static let logger = AppLogger.make("RocketViewController")
     
     private let rocketViewModel: RocketViewModel
     private let settingsStore: SettingsStore
@@ -28,10 +24,15 @@ class RocketViewController: UIViewController {
         self.rocketFormatter = rocketFormatter
         self.dateFormatter = dateFormatter
         super.init(nibName: nil, bundle: nil)
+        settingsStore.addObserver(self)
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    deinit {
+        settingsStore.removeObserver(self)
     }
     
     override func viewDidLoad() {
@@ -43,6 +44,7 @@ class RocketViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
+        refreshPagesForUpdatedSettingsIfNeeded()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -120,11 +122,11 @@ class RocketViewController: UIViewController {
 
     private func showErrorAlert() {
         let alert = UIAlertController(
-            title: "Ошибка",
-            message: "Не удалось загрузить данные о ракетах.",
+            title: L10n.alertErrorTitle,
+            message: L10n.rocketLoadErrorMessage,
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        alert.addAction(UIAlertAction(title: L10n.alertOk, style: .default))
         present(alert, animated: true)
     }
 
@@ -158,6 +160,20 @@ class RocketViewController: UIViewController {
             pageViewController.setViewControllers([first], direction: .forward, animated: false)
         }
     }
+
+    private func refreshPagesForUpdatedSettingsIfNeeded() {
+        guard hasRequestedInitialData, !rocketViewControllers.isEmpty else { return }
+
+        let currentIndex = (pageViewController.viewControllers?.first as? RocketContentViewController)?.pageIndex ?? pageControl.currentPage
+        setupPages()
+
+        let safeIndex = min(max(currentIndex, 0), max(rocketViewControllers.count - 1, 0))
+        pageControl.currentPage = safeIndex
+
+        if rocketViewControllers.indices.contains(safeIndex) {
+            pageViewController.setViewControllers([rocketViewControllers[safeIndex]], direction: .forward, animated: false)
+        }
+    }
     
     @objc private func pageControlChanged(_ sender: UIPageControl) {
         let currentPage = sender.currentPage
@@ -165,6 +181,14 @@ class RocketViewController: UIViewController {
         
         let direction: UIPageViewController.NavigationDirection = currentPage > (pageViewController.viewControllers?.first as? RocketContentViewController)?.pageIndex ?? 0 ? .forward : .reverse
         pageViewController.setViewControllers([rocketViewControllers[currentPage]], direction: direction, animated: true)
+    }
+}
+
+extension RocketViewController: SettingsStoreObserver {
+    func settingsStore(_ settingsStore: SettingsStore, didUpdate preference: MeasurementPreference) {
+        DispatchQueue.main.async { [weak self] in
+            self?.refreshPagesForUpdatedSettingsIfNeeded()
+        }
     }
 }
 

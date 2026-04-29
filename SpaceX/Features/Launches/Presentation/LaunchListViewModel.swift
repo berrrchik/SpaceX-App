@@ -44,7 +44,7 @@ final class LaunchListViewModel {
             } catch {
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
-                    let errorState = LaunchListState.error("ОКАК! Что-то пошло не так, проверьте соединение")
+                    let errorState = LaunchListState.error(L10n.launchesNetworkError)
                     self.state = errorState
                     completion(errorState)
                 }

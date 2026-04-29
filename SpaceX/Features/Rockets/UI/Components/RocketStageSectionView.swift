@@ -43,9 +43,9 @@ final class RocketStageSectionView: UIView {
             make.leading.trailing.bottom.equalToSuperview()
         }
 
-        stackView.addArrangedSubview(makeRow(title: "Количество двигателей", valueLabel: enginesValue))
-        stackView.addArrangedSubview(makeRow(title: "Количество топлива", valueLabel: fuelValue))
-        stackView.addArrangedSubview(makeRow(title: "Время сгорания", valueLabel: burnTimeValue))
+        stackView.addArrangedSubview(makeRow(title: L10n.rocketEnginesCount, valueLabel: enginesValue))
+        stackView.addArrangedSubview(makeRow(title: L10n.rocketFuelAmount, valueLabel: fuelValue))
+        stackView.addArrangedSubview(makeRow(title: L10n.rocketBurnTime, valueLabel: burnTimeValue))
     }
 
     private func makeRow(title: String, valueLabel: UILabel) -> UIStackView {

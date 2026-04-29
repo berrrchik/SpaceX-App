@@ -1,11 +1,7 @@
 import Foundation
-import OSLog
 
 final class URLSessionHTTPClient: HTTPClient {
-    private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "SpaceX",
-        category: "HTTPClient"
-    )
+    private static let logger = AppLogger.make("HTTPClient")
 
     private let session: URLSession
     private let requestBuilder: RequestBuilding
