@@ -8,7 +8,7 @@ class SettingsViewController: UIViewController {
     
     init(viewModel: SettingsViewModel) {
         self.viewModel = viewModel
-        self.settingsView = SettingsView(viewModel: viewModel)
+        self.settingsView = SettingsView(toggleStates: viewModel.getToggleStates())
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -19,6 +19,7 @@ class SettingsViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupCloseButtonAction()
+        bindToggles()
     }
     
     override func loadView() {
@@ -28,9 +29,15 @@ class SettingsViewController: UIViewController {
     private func setupCloseButtonAction() {
         settingsView.closeButton.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
     }
+
+    private func bindToggles() {
+        settingsView.onToggleChanged = { [weak self] index, _ in
+            self?.viewModel.toggleState(at: index)
+        }
+    }
     
     @objc private func closeButtonTapped() {
-        settingsView.saveSettings()
+        viewModel.saveSettings()
         coordinator?.dismissViewController(from: self)
     }
 }

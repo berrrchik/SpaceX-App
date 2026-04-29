@@ -51,7 +51,7 @@ final class LoadingView: UIView {
         }
     }
     
-    private func startRotationAnimation() {
+    func startRotationAnimation() {
         rocketLabel.layer.removeAnimation(forKey: "rotationAnimation")
         
         let rotationAnimation = CABasicAnimation(keyPath: "transform.rotation")

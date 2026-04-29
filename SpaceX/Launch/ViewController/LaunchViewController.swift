@@ -62,9 +62,6 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     private func setupTableView() {
         launchView.tableView.dataSource = self
         launchView.tableView.delegate = self
-        launchView.tableView.register(LaunchCell.self, forCellReuseIdentifier: "LaunchCell")
-        launchView.tableView.rowHeight = UITableView.automaticDimension
-        launchView.tableView.estimatedRowHeight = 120
         paginationIndicator.hidesWhenStopped = true
     }
     
@@ -172,23 +169,18 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         switch currentState {
         case .empty:
-            return createMessageCell(with: "Нет данных о запуске этой ракеты")
+            return createErrorCell(with: "Нет данных о запуске этой ракеты")
         case .error(let message):
-            return createMessageCell(with: message)
+            return createErrorCell(with: message)
         default:
             return createLaunchCell(for: indexPath)
         }
     }
     
-    private func createMessageCell(with message: String) -> UITableViewCell {
-        let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
-        cell.backgroundColor = AppColors.clear
-        cell.textLabel?.text = message
-        cell.textLabel?.textColor = AppColors.textGray56
-        cell.textLabel?.font = AppFonts.regular20
-        cell.textLabel?.textAlignment = .center
-        cell.textLabel?.numberOfLines = 0
-        cell.selectionStyle = .none
+    private func createErrorCell(with message: String) -> UITableViewCell {
+        let cell = launchView.tableView.dequeueReusableCell(withIdentifier: LaunchErrorCell.reuseId)
+            ?? LaunchErrorCell(style: .default, reuseIdentifier: LaunchErrorCell.reuseId)
+        (cell as? LaunchErrorCell)?.configure(message: message)
         return cell
     }
     

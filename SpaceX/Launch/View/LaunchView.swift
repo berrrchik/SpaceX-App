@@ -26,6 +26,7 @@ final class LaunchView: UIView {
         tableView.backgroundColor = AppColors.clear
         tableView.separatorStyle = .none
         tableView.register(LaunchCell.self, forCellReuseIdentifier: "LaunchCell")
+        tableView.register(LaunchErrorCell.self, forCellReuseIdentifier: LaunchErrorCell.reuseId)
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = Constants.estimatedRowHeight
         
@@ -49,6 +50,7 @@ final class LaunchView: UIView {
 
     func showLoadingOverlay() {
         loadingOverlayView.isHidden = false
+        loadingOverlayView.startRotationAnimation()
     }
 
     func hideLoadingOverlay() {

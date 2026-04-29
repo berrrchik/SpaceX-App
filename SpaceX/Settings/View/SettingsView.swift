@@ -2,102 +2,96 @@ import UIKit
 import SnapKit
 
 final class SettingsView: UIView {
-    
     let settingsLabel = UILabel()
     let closeButton = UIButton()
-    
+
     let heightLabel = UILabel()
     let diameterLabel = UILabel()
     let massLabel = UILabel()
     let payloadWeightsLabel = UILabel()
-    
+
     let labelStackView = UIStackView()
-    private var toggleViews = [CustomToggleView]()
-    
-    private let viewModel: SettingsViewModel
-    
-    init(viewModel: SettingsViewModel) {
-        self.viewModel = viewModel
+    private(set) var toggleViews = [CustomToggleView]()
+
+    var onToggleChanged: ((Int, Bool) -> Void)?
+
+    init(toggleStates: [Bool]) {
         super.init(frame: .zero)
         backgroundColor = AppColors.black
-        setupViews()
+        setupViews(toggleStates: toggleStates)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    private func setupViews() {
+
+    private func setupViews(toggleStates: [Bool]) {
         setupSettingsLabel()
         setupCloseButton()
         setupLabels()
-        setupLabelStackView()
+        setupLabelStackView(toggleStates: toggleStates)
     }
-    
+
     private func setupSettingsLabel() {
         addSubview(settingsLabel)
         settingsLabel.text = "Настройки"
         settingsLabel.textColor = AppColors.white
         settingsLabel.numberOfLines = 0
         settingsLabel.font = AppFonts.medium16
-        settingsLabel.translatesAutoresizingMaskIntoConstraints = false
 
         settingsLabel.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(Constants.settingsLabelTopOffset)
             make.centerX.equalToSuperview()
         }
     }
-    
+
     private func setupCloseButton() {
         addSubview(closeButton)
         closeButton.setTitle("Закрыть", for: .normal)
         closeButton.setTitleColor(AppColors.white, for: .normal)
         closeButton.titleLabel?.font = AppFonts.bold16
-        
+
         closeButton.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(Constants.closeButtonTopOffset)
             make.trailing.equalToSuperview().inset(Constants.closeButtonTrailingMargin)
         }
     }
-    
+
     private func setupLabels() {
         [heightLabel, diameterLabel, massLabel, payloadWeightsLabel].forEach {
             $0.textColor = AppColors.white
             $0.font = AppFonts.medium16
         }
-        
+
         heightLabel.text = "Высота"
         diameterLabel.text = "Диаметр"
         massLabel.text = "Масса"
         payloadWeightsLabel.text = "Полезная нагрузка"
     }
-    
-    private func setupLabelStackView() {
-        let toggleStates = viewModel.getToggleStates()
-        
+
+    private func setupLabelStackView(toggleStates: [Bool]) {
+        let safeStates = toggleStates + Array(repeating: false, count: max(0, 4 - toggleStates.count))
+
         let horizontalStacks = [
-            createHorizontalStack(label: heightLabel, firstText: "m", secondText: "ft", initialState: toggleStates[0], index: 0),
-            createHorizontalStack(label: diameterLabel, firstText: "m", secondText: "ft", initialState: toggleStates[1], index: 1),
-            createHorizontalStack(label: massLabel, firstText: "kg", secondText: "lb", initialState: toggleStates[2], index: 2),
-            createHorizontalStack(label: payloadWeightsLabel, firstText: "kg", secondText: "lb", initialState: toggleStates[3], index: 3),
+            createHorizontalStack(label: heightLabel, firstText: "m", secondText: "ft", initialState: safeStates[0], index: 0),
+            createHorizontalStack(label: diameterLabel, firstText: "m", secondText: "ft", initialState: safeStates[1], index: 1),
+            createHorizontalStack(label: massLabel, firstText: "kg", secondText: "lb", initialState: safeStates[2], index: 2),
+            createHorizontalStack(label: payloadWeightsLabel, firstText: "kg", secondText: "lb", initialState: safeStates[3], index: 3)
         ]
-        
+
         labelStackView.axis = .vertical
         labelStackView.spacing = Constants.stackViewSpacing
         labelStackView.distribution = .equalSpacing
-        
         horizontalStacks.forEach { labelStackView.addArrangedSubview($0) }
-        
+
         addSubview(labelStackView)
-        labelStackView.translatesAutoresizingMaskIntoConstraints = false
-        
         labelStackView.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(Constants.stackViewTopOffset)
             make.leading.equalToSuperview().offset(Constants.stackViewHorizontalMargin)
             make.trailing.equalToSuperview().inset(Constants.stackViewHorizontalMargin)
         }
     }
-    
+
     private func createHorizontalStack(
         label: UILabel,
         firstText: String,
@@ -109,24 +103,20 @@ final class SettingsView: UIView {
         let toggleView = CustomToggleView(firstText: firstText, secondText: secondText, initialState: initialState)
 
         toggleView.onToggle = { [weak self] isOn in
-            self?.viewModel.toggleState(at: index)
+            self?.onToggleChanged?(index, isOn)
         }
-        
+
         stackView.axis = .horizontal
         stackView.spacing = Constants.horizontalStackSpacing
         stackView.distribution = .fill
         stackView.alignment = .center
-        
+
         stackView.addArrangedSubview(label)
         stackView.addArrangedSubview(toggleView)
-        
+
         toggleViews.append(toggleView)
-        
+
         return stackView
-    }
-    
-    func saveSettings() {
-        viewModel.saveSettings()
     }
 }
 

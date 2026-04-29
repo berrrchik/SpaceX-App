@@ -43,12 +43,7 @@ class RocketContentViewController: UIViewController {
     }
     
     override var prefersStatusBarHidden: Bool {
-        return shouldHideStatusBar
-    }
-    
-    private var shouldHideStatusBar: Bool {
-        let frame = rocketView.textContainer.convert(rocketView.textContainer.bounds, to: nil)
-        return frame.minY < view.safeAreaInsets.top
+        return false
     }
     
     func configure(with displayModel: RocketDisplayModel, rocket: Rocket) {
@@ -76,12 +71,10 @@ class RocketContentViewController: UIViewController {
 
 extension RocketContentViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let shouldHide = self.shouldHideStatusBar
-        if self.previousStatusBarHidden != shouldHide {
-            UIView.animate(withDuration: 0.2) {
-                self.setNeedsStatusBarAppearanceUpdate()
-            }
-            self.previousStatusBarHidden = shouldHide
+        let shouldHide = false
+        if previousStatusBarHidden != shouldHide {
+            setNeedsStatusBarAppearanceUpdate()
+            previousStatusBarHidden = shouldHide
         }
     }
 }
