@@ -41,26 +41,27 @@ final class LoadingView: UIView {
         }
     }
     
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        startRotationAnimation()
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+
+        if window == nil {
+            stopRotationAnimation()
+        } else {
+            startRotationAnimation()
+        }
     }
     
     private func startRotationAnimation() {
-        // Remove any existing animation to prevent duplicates
         rocketLabel.layer.removeAnimation(forKey: "rotationAnimation")
         
         let rotationAnimation = CABasicAnimation(keyPath: "transform.rotation")
-        rotationAnimation.toValue = NSNumber(value: Double.pi * 2) // Full 360-degree rotation
-        rotationAnimation.duration = 1 // Duration of one rotation
-        rotationAnimation.repeatCount = .infinity // Repeat indefinitely
+        rotationAnimation.toValue = NSNumber(value: Double.pi * 2)
+        rotationAnimation.duration = 1
+        rotationAnimation.repeatCount = .infinity
         rocketLabel.layer.add(rotationAnimation, forKey: "rotationAnimation")
-        
-        print("Animation started") // Debug log
     }
     
     func stopRotationAnimation() {
         rocketLabel.layer.removeAnimation(forKey: "rotationAnimation")
-        print("Animation stopped") // Debug log
     }
 }
