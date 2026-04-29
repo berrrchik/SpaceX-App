@@ -1,16 +1,26 @@
 import UIKit
+import OSLog
 
 class RocketViewController: UIViewController {
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "SpaceX",
+        category: "RocketViewController"
+    )
     
     private let rocketViewModel: RocketViewModel
+    private let settingsViewModel: SettingsViewModel
     private let pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal)
     private let pageControl = UIPageControl()
-    private let pageControlContainer = UIView()
     private var rocketViewControllers: [RocketContentViewController] = []
-    weak var coordinator: AppCoordinator?
+    private var hasRequestedInitialData = false
+    weak var coordinator: AppCoordinating?
     
-    init(rocketViewModel: RocketViewModel = RocketViewModel()) {
+    init(
+        rocketViewModel: RocketViewModel = RocketViewModel(),
+        settingsViewModel: SettingsViewModel
+    ) {
         self.rocketViewModel = rocketViewModel
+        self.settingsViewModel = settingsViewModel
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -21,12 +31,22 @@ class RocketViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        fetchData()
+        Self.logger.debug("viewDidLoad completed; waiting for hierarchy attachment before fetching rockets")
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+
+        guard !hasRequestedInitialData else { return }
+        hasRequestedInitialData = true
+
+        Self.logger.debug("viewDidAppear; starting initial rocket fetch. windowAttached=\(self.view.window != nil, privacy: .public)")
+        fetchData()
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -71,34 +91,50 @@ class RocketViewController: UIViewController {
     }
     
     private func fetchData() {
-        let loadingViewController = LoadingViewController()
-        loadingViewController.modalPresentationStyle = .overFullScreen
-        present(loadingViewController, animated: false) {
-            self.rocketViewModel.fetchRockets { [weak self] result in
-                DispatchQueue.main.async {
-                    switch result {
-                    case .success:
-                        self?.setupPages()
-                    case .failure:
-                        print("Error fetching rockets")
-                    }
-                    loadingViewController.dismiss(animated: false)
+        Self.logger.debug("Fetching rockets")
+        coordinator?.showLoading(from: self)
+        rocketViewModel.fetchRockets { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else { return }
+
+                switch result {
+                case .success:
+                    Self.logger.debug("Rocket fetch succeeded with \(self.rocketViewModel.numberOfRockets, privacy: .public) rockets")
+                    self.setupPages()
+                case .failure:
+                    Self.logger.error("Rocket fetch failed; presenting alert")
+                    self.showErrorAlert()
                 }
+
+                self.coordinator?.hideLoading()
             }
         }
     }
-    
+
+    private func showErrorAlert() {
+        let alert = UIAlertController(
+            title: "Ошибка",
+            message: "Не удалось загрузить данные о ракетах.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+
     private func setupPages() {
-        rocketViewControllers = (0..<rocketViewModel.numberOfRockets).map { index in
+        rocketViewControllers = (0..<rocketViewModel.numberOfRockets).compactMap { index in
             guard let rocket = rocketViewModel.rocket(at: index) else {
-                return RocketContentViewController()
+                return nil
             }
-            let vc = RocketContentViewController()
+
+            let vc = RocketContentViewController(settingsViewModel: settingsViewModel)
             vc.configure(with: rocket)
-            vc.coordinator = self.coordinator
+            vc.coordinator = coordinator
             vc.pageIndex = index
             return vc
         }
+
+        Self.logger.debug("Configured \(self.rocketViewControllers.count, privacy: .public) rocket pages")
         
         pageControl.numberOfPages = rocketViewControllers.count
         pageControl.isHidden = rocketViewControllers.count <= 1

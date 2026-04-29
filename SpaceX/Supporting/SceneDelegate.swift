@@ -7,8 +7,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
-        window = UIWindow(windowScene: windowScene)
-        coordinator = AppCoordinator(window: window!)
+        let window = UIWindow(windowScene: windowScene)
+        self.window = window
+        coordinator = AppCoordinator(window: window)
         coordinator?.start()
     }
 

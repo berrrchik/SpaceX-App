@@ -3,10 +3,11 @@ import UIKit
 class SettingsViewController: UIViewController {
     
     private let settingsView: SettingsView
-    private let viewModel = SettingsViewModel()
-    weak var coordinator: AppCoordinator?
+    private let viewModel: SettingsViewModel
+    weak var coordinator: AppCoordinating?
     
-    init() {
+    init(viewModel: SettingsViewModel) {
+        self.viewModel = viewModel
         self.settingsView = SettingsView(viewModel: viewModel)
         super.init(nibName: nil, bundle: nil)
     }

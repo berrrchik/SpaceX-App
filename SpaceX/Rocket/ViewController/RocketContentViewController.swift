@@ -3,20 +3,19 @@ import UIKit
 class RocketContentViewController: UIViewController {
     
     var pageIndex: Int = 0
-    weak var coordinator: AppCoordinator?
+    weak var coordinator: AppCoordinating?
     
     let rocketView: RocketView
     private var previousStatusBarHidden = false
     private var currentRocket: RocketElement?
     
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
-        self.rocketView = RocketView(viewModel: SettingsViewModel())
-        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+    init(settingsViewModel: SettingsViewModel) {
+        self.rocketView = RocketView(viewModel: settingsViewModel)
+        super.init(nibName: nil, bundle: nil)
     }
     
     required init?(coder: NSCoder) {
-        self.rocketView = RocketView(viewModel: SettingsViewModel())
-        super.init(coder: coder)
+        fatalError("init(coder:) has not been implemented")
     }
     
     override func viewDidLoad() {

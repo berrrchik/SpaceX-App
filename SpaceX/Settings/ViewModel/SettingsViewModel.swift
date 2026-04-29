@@ -5,25 +5,33 @@ extension Notification.Name {
 }
 
 class SettingsViewModel {
+    enum SettingsKey: String, CaseIterable {
+        case isHeightFt
+        case isDiameterFt
+        case isMassLb
+        case isPayloadWeightLb
+    }
     
-    private let userDefaultsKeys = [
-        "isHeightFt",
-        "isDiameterft",
-        "isMassLb",
-        "isPayloadWeightLb"
-    ]
-    
+    private let userDefaults: UserDefaults
+    private let notificationCenter: NotificationCenter
     private var toggleStates: [Bool]
     
-    init() {
-        toggleStates = userDefaultsKeys.map { key in
-            UserDefaults.standard.bool(forKey: key)
+    init(
+        userDefaults: UserDefaults = .standard,
+        notificationCenter: NotificationCenter = .default
+    ) {
+        self.userDefaults = userDefaults
+        self.notificationCenter = notificationCenter
+
+        Self.migrateLegacyKeysIfNeeded(in: userDefaults)
+        toggleStates = Self.keys.map { key in
+            userDefaults.bool(forKey: key.rawValue)
         }
         setupObservers()
     }
     
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        notificationCenter.removeObserver(self)
     }
     
     func getToggleStates() -> [Bool] {
@@ -31,38 +39,55 @@ class SettingsViewModel {
     }
     
     func toggleState(at index: Int) {
-        guard index < toggleStates.count else { return }
+        guard toggleStates.indices.contains(index) else { return }
         toggleStates[index].toggle()
         saveToggleStates()
     }
     
     func saveSettings() {
         saveToggleStates()
-        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
+        notificationCenter.post(name: .settingsDidChange, object: nil)
     }
     
     private func saveToggleStates() {
         for (index, state) in toggleStates.enumerated() {
-            UserDefaults.standard.set(state, forKey: userDefaultsKeys[index])
+            userDefaults.set(state, forKey: Self.keys[index].rawValue)
         }
     }
     
     private func refreshToggleStates() {
-        toggleStates = userDefaultsKeys.map { key in
-            UserDefaults.standard.bool(forKey: key)
+        toggleStates = Self.keys.map { key in
+            userDefaults.bool(forKey: key.rawValue)
         }
     }
     
     private func setupObservers() {
-        NotificationCenter.default.addObserver(
+        notificationCenter.addObserver(
             self,
             selector: #selector(settingsDidChange),
             name: .settingsDidChange,
             object: nil
         )
     }
+
+    private static func migrateLegacyKeysIfNeeded(in userDefaults: UserDefaults) {
+        let legacyKey = "isDiameterft"
+        let newKey = SettingsKey.isDiameterFt.rawValue
+
+        guard userDefaults.object(forKey: newKey) == nil,
+              let legacyValue = userDefaults.object(forKey: legacyKey) as? Bool else {
+            return
+        }
+
+        userDefaults.set(legacyValue, forKey: newKey)
+        userDefaults.removeObject(forKey: legacyKey)
+    }
     
     @objc private func settingsDidChange() {
         refreshToggleStates()
     }
+}
+
+private extension SettingsViewModel {
+    static let keys = SettingsKey.allCases
 }
