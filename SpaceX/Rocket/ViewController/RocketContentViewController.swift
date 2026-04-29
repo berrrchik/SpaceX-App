@@ -9,8 +9,8 @@ class RocketContentViewController: UIViewController {
     private var previousStatusBarHidden = false
     private var currentRocket: RocketElement?
     
-    init(settingsViewModel: SettingsViewModel) {
-        self.rocketView = RocketView(viewModel: settingsViewModel)
+    init(settingsStore: SettingsStore) {
+        self.rocketView = RocketView(settingsStore: settingsStore)
         super.init(nibName: nil, bundle: nil)
     }
     

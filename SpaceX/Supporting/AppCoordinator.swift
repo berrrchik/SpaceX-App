@@ -12,6 +12,7 @@ protocol AppCoordinating: AnyObject {
     func dismissViewController(from viewController: UIViewController)
     func showLoading(from presenter: UIViewController)
     func hideLoading()
+    func hideLoading(completion: (() -> Void)?)
 }
 
 class AppCoordinator: Coordinator {
@@ -21,26 +22,22 @@ class AppCoordinator: Coordinator {
     )
 
     private let window: UIWindow
+    private let appContainer: AppContainer
     let navigationController: UINavigationController
-    private let rocketViewModel: RocketViewModel
-    private let launchViewModel: LaunchViewModel
-    private let settingsViewModel: SettingsViewModel
     private weak var loadingViewController: LoadingViewController?
     
-    init(window: UIWindow) {
+    init(window: UIWindow, appContainer: AppContainer = AppContainer()) {
         self.window = window
+        self.appContainer = appContainer
         self.navigationController = UINavigationController()
-        self.rocketViewModel = RocketViewModel()
-        self.launchViewModel = LaunchViewModel()
-        self.settingsViewModel = SettingsViewModel()
         
         setupNavigationController()
     }
     
     func start() {
         let rocketViewController = RocketViewController(
-            rocketViewModel: rocketViewModel,
-            settingsViewModel: settingsViewModel
+            rocketViewModel: appContainer.rocketViewModel,
+            settingsStore: appContainer.settingsStore
         )
         rocketViewController.coordinator = self
         navigationController.pushViewController(rocketViewController, animated: false)
@@ -71,7 +68,7 @@ class AppCoordinator: Coordinator {
     }
     
     func showSettings(from viewController: UIViewController) {
-        let settingsViewController = SettingsViewController(viewModel: settingsViewModel)
+        let settingsViewController = SettingsViewController(viewModel: appContainer.makeSettingsViewModel())
         settingsViewController.coordinator = self
         settingsViewController.modalPresentationStyle = .formSheet
         viewController.present(settingsViewController, animated: true)
@@ -79,7 +76,11 @@ class AppCoordinator: Coordinator {
     
     func showLaunches(for rocket: RocketElement) {
         Self.logger.debug("Navigating to launches for rocket id=\(rocket.id, privacy: .public) name=\(rocket.name, privacy: .public)")
-        let launchViewController = LaunchViewController(rocketId: rocket.id, rocketName: rocket.name, launchViewModel: launchViewModel)
+        let launchViewController = LaunchViewController(
+            rocketId: rocket.id,
+            rocketName: rocket.name,
+            launchViewModel: appContainer.launchViewModel
+        )
         launchViewController.coordinator = self
         
         let backButton = UIBarButtonItem()
@@ -105,9 +106,20 @@ class AppCoordinator: Coordinator {
     }
 
     func hideLoading() {
+        hideLoading(completion: nil)
+    }
+
+    func hideLoading(completion: (() -> Void)?) {
+        guard let loadingViewController else {
+            completion?()
+            return
+        }
+
         Self.logger.debug("Dismissing loading controller")
-        loadingViewController?.dismiss(animated: false)
-        loadingViewController = nil
+        loadingViewController.dismiss(animated: false) { [weak self] in
+            self?.loadingViewController = nil
+            completion?()
+        }
     }
     
     func popViewController() {

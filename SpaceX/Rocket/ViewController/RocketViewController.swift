@@ -8,7 +8,7 @@ class RocketViewController: UIViewController {
     )
     
     private let rocketViewModel: RocketViewModel
-    private let settingsViewModel: SettingsViewModel
+    private let settingsStore: SettingsStore
     private let pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal)
     private let pageControl = UIPageControl()
     private var rocketViewControllers: [RocketContentViewController] = []
@@ -17,10 +17,10 @@ class RocketViewController: UIViewController {
     
     init(
         rocketViewModel: RocketViewModel = RocketViewModel(),
-        settingsViewModel: SettingsViewModel
+        settingsStore: SettingsStore
     ) {
         self.rocketViewModel = rocketViewModel
-        self.settingsViewModel = settingsViewModel
+        self.settingsStore = settingsStore
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -101,12 +101,13 @@ class RocketViewController: UIViewController {
                 case .success:
                     Self.logger.debug("Rocket fetch succeeded with \(self.rocketViewModel.numberOfRockets, privacy: .public) rockets")
                     self.setupPages()
+                    self.coordinator?.hideLoading()
                 case .failure:
-                    Self.logger.error("Rocket fetch failed; presenting alert")
-                    self.showErrorAlert()
+                    Self.logger.error("Rocket fetch failed; dismissing loading before alert")
+                    self.coordinator?.hideLoading {
+                        self.showErrorAlert()
+                    }
                 }
-
-                self.coordinator?.hideLoading()
             }
         }
     }
@@ -127,7 +128,7 @@ class RocketViewController: UIViewController {
                 return nil
             }
 
-            let vc = RocketContentViewController(settingsViewModel: settingsViewModel)
+            let vc = RocketContentViewController(settingsStore: settingsStore)
             vc.configure(with: rocket)
             vc.coordinator = coordinator
             vc.pageIndex = index

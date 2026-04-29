@@ -52,8 +52,8 @@ final class RocketView: UIView {
     
     let showLaunchesButton = UIButton()
     
-    init(viewModel: SettingsViewModel) {
-        self.squareView = SquareView(viewModel: viewModel)
+    init(settingsStore: SettingsStore) {
+        self.squareView = SquareView(settingsStore: settingsStore)
         super.init(frame: .zero)
         setupView()
     }
@@ -367,7 +367,7 @@ private extension RocketView {
 }
 
 #Preview {
-    let rocketView = RocketView(viewModel: SettingsViewModel())
+    let rocketView = RocketView(settingsStore: UserDefaultsSettingsStore())
     let viewController = UIViewController()
     viewController.view = rocketView
     return viewController

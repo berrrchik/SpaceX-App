@@ -1,20 +1,20 @@
 import UIKit
 import SnapKit
 
-final class SquareView: UIView {
+final class SquareView: UIView, SettingsStoreObserver {
     
     private let scrollStackView = UIScrollView()
     private let squareStack = UIStackView()
-    private let viewModel: SettingsViewModel
+    private let settingsStore: SettingsStore
     private var lastItems: [(metricValue: Any?, imperialValue: Any?, metricMeasure: String, imperialMeasure: String)] = []
     
     private var squares: [(square: UIView, valueLabel: UILabel, measureLabel: UILabel)] = []
     
-    init(viewModel: SettingsViewModel) {
-        self.viewModel = viewModel
+    init(settingsStore: SettingsStore) {
+        self.settingsStore = settingsStore
         super.init(frame: .zero)
         setupViews()
-        setupObservers()
+        settingsStore.addObserver(self)
     }
     
     required init?(coder: NSCoder) {
@@ -22,20 +22,19 @@ final class SquareView: UIView {
     }
     
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        settingsStore.removeObserver(self)
     }
     
     func configure(with items: [(metricValue: Any?, imperialValue: Any?, metricMeasure: String, imperialMeasure: String)]) {
         guard items.count == squares.count else { return }
-        self.lastItems = items
-        updateUI()
+        lastItems = items
+        updateUI(with: settingsStore.measurementPreference)
     }
     
-    private func updateUI() {
-        let toggleStates = viewModel.getToggleStates()
-        
+    private func updateUI(with preference: MeasurementPreference) {
         for (index, item) in lastItems.enumerated() {
-            let isImperial = toggleStates[index]
+            guard let setting = MeasurementSetting(rawValue: index) else { continue }
+            let isImperial = preference.usesImperial(for: setting)
             let value = isImperial ? item.imperialValue : item.metricValue
             let measureText = isImperial ? item.imperialMeasure : item.metricMeasure
             
@@ -125,18 +124,9 @@ final class SquareView: UIView {
         }
     }
     
-    private func setupObservers() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(settingsDidChange),
-            name: .settingsDidChange,
-            object: nil
-        )
-    }
-    
-    @objc private func settingsDidChange() {
+    func settingsStore(_ settingsStore: SettingsStore, didUpdate preference: MeasurementPreference) {
         if !lastItems.isEmpty {
-            updateUI()
+            updateUI(with: preference)
         } else {
             squares.forEach { $0.valueLabel.text = "–"; $0.measureLabel.text = "" }
         }
