@@ -26,7 +26,6 @@ final class LaunchCell: UITableViewCell {
         } else {
             statusImageView.image = UIImage(named: "unknown")
         }
-        layoutIfNeeded()
     }
     
     private func setupView() {
@@ -74,7 +73,7 @@ final class LaunchCell: UITableViewCell {
             make.top.equalTo(nameLabel.snp.bottom).offset(Constants.dateLabelTopOffset)
             make.leading.equalToSuperview().offset(Constants.labelHorizontalMargin)
             make.trailing.lessThanOrEqualTo(statusImageView.snp.leading).offset(-Constants.labelHorizontalMargin)
-            make.bottom.lessThanOrEqualToSuperview().offset(-Constants.labelBottomMargin)
+            make.bottom.equalToSuperview().offset(-Constants.labelBottomMargin)
         }
     }
     

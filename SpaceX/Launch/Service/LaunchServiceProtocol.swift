@@ -1,5 +1,15 @@
 import Foundation
 
+struct LaunchPage {
+    let launches: [LaunchElement]
+    let hasNextPage: Bool
+    let nextPage: Int?
+}
+
 protocol LaunchServiceProtocol {
-    func fetchLaunch(completion: @escaping (Result<[LaunchElement], Error>) -> Void)
+    func fetchLaunchPage(
+        for rocketId: String,
+        page: Int,
+        completion: @escaping (Result<LaunchPage, Error>) -> Void
+    )
 }

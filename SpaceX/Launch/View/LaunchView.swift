@@ -4,6 +4,7 @@ import SnapKit
 final class LaunchView: UIView {
     
     let tableView = UITableView()
+    private let loadingOverlayView = LoadingView()
     var onBackButtonTap: (() -> Void)?
     
     override init(frame: CGRect) {
@@ -18,6 +19,7 @@ final class LaunchView: UIView {
     private func setupView() {
         addSubview(tableView)
         setupTableView()
+        setupLoadingOverlay()
     }
     
     private func setupTableView() {
@@ -33,6 +35,25 @@ final class LaunchView: UIView {
             make.trailing.equalToSuperview().inset(Constants.horizontalMargin)
             make.bottom.equalToSuperview()
         }
+    }
+
+    private func setupLoadingOverlay() {
+        addSubview(loadingOverlayView)
+        loadingOverlayView.isHidden = true
+        loadingOverlayView.isUserInteractionEnabled = false
+
+        loadingOverlayView.snp.makeConstraints { make in
+            make.edges.equalTo(tableView)
+        }
+    }
+
+    func showLoadingOverlay() {
+        loadingOverlayView.isHidden = false
+    }
+
+    func hideLoadingOverlay() {
+        loadingOverlayView.isHidden = true
+        loadingOverlayView.stopRotationAnimation()
     }
     
     @objc private func backButtonTapped() {
