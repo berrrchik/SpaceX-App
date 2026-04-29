@@ -4,22 +4,22 @@ import XCTest
 final class RocketViewModelTests: XCTestCase {
     func testFetchRocketsStoresFetchedRockets() {
         let rockets = [
-            RocketElement(
+            Rocket(
+                id: "rocket-1",
+                name: "Falcon Test",
+                country: "US",
+                costPerLaunch: 1000,
+                firstFlightDate: "24.03.2006",
                 height: MeasureSize(meters: 10, feet: 32),
                 diameter: MeasureSize(meters: 2, feet: 6),
                 mass: MeasureWeight(kg: 100, lb: 220),
                 firstStage: FirstStage(engines: 1, fuelAmountTons: 10, burnTimeSec: 100),
                 secondStage: SecondStage(engines: 1, fuelAmountTons: 5, burnTimeSec: 50),
                 payloadWeights: [MeasureWeight(kg: 10, lb: 22)],
-                flickrImages: [],
-                name: "Falcon Test",
-                costPerLaunch: 1000,
-                firstFlight: "2006-03-24",
-                country: "US",
-                id: "rocket-1"
+                flickrImages: []
             )
         ]
-        let viewModel = RocketViewModel(rocketApiService: StubRocketService(result: .success(rockets)))
+        let viewModel = RocketViewModel(rocketRepository: MockRocketRepository(result: .success(rockets)))
         let expectation = expectation(description: "Rockets loaded")
 
         viewModel.fetchRockets { result in
@@ -37,7 +37,7 @@ final class RocketViewModelTests: XCTestCase {
     }
 
     func testFetchRocketsForwardsFailureAndKeepsStateEmpty() {
-        let viewModel = RocketViewModel(rocketApiService: StubRocketService(result: .failure(TestRocketError.failed)))
+        let viewModel = RocketViewModel(rocketRepository: MockRocketRepository(result: .failure(TestRocketError.failed)))
         let expectation = expectation(description: "Rocket failure forwarded")
 
         viewModel.fetchRockets { result in
@@ -55,15 +55,15 @@ final class RocketViewModelTests: XCTestCase {
     }
 }
 
-private final class StubRocketService: RocketServiceProtocol {
-    let result: Result<[RocketElement], Error>
+private final class MockRocketRepository: RocketRepositoryProtocol {
+    let result: Result<[Rocket], Error>
 
-    init(result: Result<[RocketElement], Error>) {
+    init(result: Result<[Rocket], Error>) {
         self.result = result
     }
 
-    func fetchRockets(completion: @escaping (Result<[RocketElement], Error>) -> Void) {
-        completion(result)
+    func fetchRockets() async throws -> [Rocket] {
+        return try result.get()
     }
 }
 

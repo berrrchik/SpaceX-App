@@ -3,13 +3,13 @@ import XCTest
 
 final class LaunchViewModelTests: XCTestCase {
     func testFetchInitialLaunchesLoadsFirstPageAndCachesIt() {
-        let service = StubLaunchService(
+        let repository = MockLaunchRepository(
             responsesByPage: [
                 1: .success(
-                    LaunchPage(
+                    LaunchPageResult(
                         launches: [
-                            LaunchElement(name: "Second", dateUtc: "2023-05-01T00:00:00.000Z", success: true, rocket: "rocket-1"),
-                            LaunchElement(name: "First", dateUtc: "2024-01-01T00:00:00.000Z", success: false, rocket: "rocket-1"),
+                            Launch(name: "Second", dateUtc: "2023-05-01T00:00:00.000Z", formattedDate: "01.05.2023", success: true, rocketId: "rocket-1"),
+                            Launch(name: "First", dateUtc: "2024-01-01T00:00:00.000Z", formattedDate: "01.01.2024", success: false, rocketId: "rocket-1"),
                         ],
                         hasNextPage: true,
                         nextPage: 2
@@ -17,7 +17,7 @@ final class LaunchViewModelTests: XCTestCase {
                 )
             ]
         )
-        let viewModel = LaunchViewModel(launchApiService: service)
+        let viewModel = LaunchViewModel(launchRepository: repository)
         let expectation = expectation(description: "Initial launches loaded")
 
         viewModel.fetchInitialLaunches(rocketId: "rocket-1") { result in
@@ -25,7 +25,7 @@ final class LaunchViewModelTests: XCTestCase {
             case .success(let launches):
                 XCTAssertEqual(launches.map(\.name), ["First", "Second"])
                 XCTAssertEqual(viewModel.numberOfLaunches(for: "rocket-1"), 2)
-                XCTAssertEqual(service.requestedPages, [1])
+                XCTAssertEqual(repository.requestedPages, [1])
             case .failure(let error):
                 XCTFail("Expected success, got \(error)")
             }
@@ -36,17 +36,17 @@ final class LaunchViewModelTests: XCTestCase {
     }
 
     func testLoadNextPageIfNeededMergesNextPageWhenThresholdIsReached() {
-        let service = StubLaunchService(
+        let repository = MockLaunchRepository(
             responsesByPage: [
                 1: .success(
-                    LaunchPage(
+                    LaunchPageResult(
                         launches: Self.makeLaunches(prefix: "Page1", count: 20, rocketId: "rocket-1", dayOffset: 0),
                         hasNextPage: true,
                         nextPage: 2
                     )
                 ),
                 2: .success(
-                    LaunchPage(
+                    LaunchPageResult(
                         launches: Self.makeLaunches(prefix: "Page2", count: 2, rocketId: "rocket-1", dayOffset: 20),
                         hasNextPage: false,
                         nextPage: nil
@@ -54,7 +54,7 @@ final class LaunchViewModelTests: XCTestCase {
                 ),
             ]
         )
-        let viewModel = LaunchViewModel(launchApiService: service)
+        let viewModel = LaunchViewModel(launchRepository: repository)
         let initialExpectation = expectation(description: "Initial page loaded")
         let nextPageExpectation = expectation(description: "Next page loaded")
 
@@ -72,7 +72,7 @@ final class LaunchViewModelTests: XCTestCase {
             case .success(let launches):
                 XCTAssertEqual(launches.count, 22)
                 XCTAssertEqual(viewModel.numberOfLaunches(for: "rocket-1"), 22)
-                XCTAssertEqual(service.requestedPages, [1, 2])
+                XCTAssertEqual(repository.requestedPages, [1, 2])
             case .failure(let error):
                 XCTFail("Expected success, got \(error)")
             }
@@ -83,10 +83,10 @@ final class LaunchViewModelTests: XCTestCase {
     }
 
     func testLoadNextPageIfNeededDoesNothingBeforeThreshold() {
-        let service = StubLaunchService(
+        let repository = MockLaunchRepository(
             responsesByPage: [
                 1: .success(
-                    LaunchPage(
+                    LaunchPageResult(
                         launches: Self.makeLaunches(prefix: "Page1", count: 20, rocketId: "rocket-1", dayOffset: 0),
                         hasNextPage: true,
                         nextPage: 2
@@ -94,7 +94,7 @@ final class LaunchViewModelTests: XCTestCase {
                 )
             ]
         )
-        let viewModel = LaunchViewModel(launchApiService: service)
+        let viewModel = LaunchViewModel(launchRepository: repository)
         let expectation = expectation(description: "Initial page loaded")
 
         viewModel.fetchInitialLaunches(rocketId: "rocket-1") { result in
@@ -109,15 +109,15 @@ final class LaunchViewModelTests: XCTestCase {
             XCTFail("Next page should not be requested before threshold")
         }
 
-        XCTAssertEqual(service.requestedPages, [1])
+        XCTAssertEqual(repository.requestedPages, [1])
         XCTAssertEqual(viewModel.numberOfLaunches(for: "rocket-1"), 20)
     }
 
     func testFetchInitialLaunchesSupportsEmptyLaunchState() {
-        let service = StubLaunchService(
+        let repository = MockLaunchRepository(
             responsesByPage: [
                 1: .success(
-                    LaunchPage(
+                    LaunchPageResult(
                         launches: [],
                         hasNextPage: false,
                         nextPage: nil
@@ -125,7 +125,7 @@ final class LaunchViewModelTests: XCTestCase {
                 )
             ]
         )
-        let viewModel = LaunchViewModel(launchApiService: service)
+        let viewModel = LaunchViewModel(launchRepository: repository)
         let expectation = expectation(description: "Empty initial page loaded")
 
         viewModel.fetchInitialLaunches(rocketId: "rocket-1") { result in
@@ -134,7 +134,7 @@ final class LaunchViewModelTests: XCTestCase {
                 XCTAssertTrue(launches.isEmpty)
                 XCTAssertEqual(viewModel.numberOfLaunches(for: "rocket-1"), 0)
                 XCTAssertFalse(viewModel.hasNextPage(for: "rocket-1"))
-                XCTAssertEqual(service.requestedPages, [1])
+                XCTAssertEqual(repository.requestedPages, [1])
             case .failure(let error):
                 XCTFail("Expected success, got \(error)")
             }
@@ -145,10 +145,10 @@ final class LaunchViewModelTests: XCTestCase {
     }
 
     func testLoadNextPageIfNeededCanSucceedAfterTransientFailureOnRetry() {
-        let service = StubLaunchService(
+        let repository = MockLaunchRepository(
             responsesByPage: [
                 1: .success(
-                    LaunchPage(
+                    LaunchPageResult(
                         launches: Self.makeLaunches(prefix: "Page1", count: 20, rocketId: "rocket-1", dayOffset: 0),
                         hasNextPage: true,
                         nextPage: 2
@@ -156,12 +156,12 @@ final class LaunchViewModelTests: XCTestCase {
                 )
             ]
         )
-        service.setSequentialResponses(
+        repository.setSequentialResponses(
             for: 2,
             responses: [
                 .failure(TestError.transient),
                 .success(
-                    LaunchPage(
+                    LaunchPageResult(
                         launches: Self.makeLaunches(prefix: "Page2", count: 2, rocketId: "rocket-1", dayOffset: 20),
                         hasNextPage: false,
                         nextPage: nil
@@ -170,7 +170,7 @@ final class LaunchViewModelTests: XCTestCase {
             ]
         )
 
-        let viewModel = LaunchViewModel(launchApiService: service)
+        let viewModel = LaunchViewModel(launchRepository: repository)
         let initialExpectation = expectation(description: "Initial page loaded")
         let firstAttemptExpectation = expectation(description: "First next-page attempt fails")
         let retryExpectation = expectation(description: "Retry next-page attempt succeeds")
@@ -210,52 +210,57 @@ final class LaunchViewModelTests: XCTestCase {
         }
         wait(for: [retryExpectation], timeout: 1)
 
-        XCTAssertEqual(service.requestedPages, [1, 2, 2])
+        XCTAssertEqual(repository.requestedPages, [1, 2, 2])
     }
 
-    private static func makeLaunches(prefix: String, count: Int, rocketId: String, dayOffset: Int) -> [LaunchElement] {
+    private static func makeLaunches(prefix: String, count: Int, rocketId: String, dayOffset: Int) -> [Launch] {
         (0..<count).map { index in
             let day = String(format: "%02d", index + 1 + dayOffset)
-            return LaunchElement(
+            return Launch(
                 name: "\(prefix)-\(index)",
                 dateUtc: "2024-01-\(day)T00:00:00.000Z",
+                formattedDate: "\(day).01.2024",
                 success: true,
-                rocket: rocketId
+                rocketId: rocketId
             )
         }
     }
 }
 
-private final class StubLaunchService: LaunchServiceProtocol {
-    let responsesByPage: [Int: Result<LaunchPage, Error>]
-    private var sequentialResponsesByPage: [Int: [Result<LaunchPage, Error>]] = [:]
+private final class MockLaunchRepository: LaunchRepositoryProtocol {
+    let responsesByPage: [Int: Result<LaunchPageResult, Error>]
+    private var sequentialResponsesByPage: [Int: [Result<LaunchPageResult, Error>]] = [:]
     private(set) var requestedPages: [Int] = []
 
-    init(responsesByPage: [Int: Result<LaunchPage, Error>]) {
+    init(responsesByPage: [Int: Result<LaunchPageResult, Error>]) {
         self.responsesByPage = responsesByPage
     }
 
     func setSequentialResponses(
         for page: Int,
-        responses: [Result<LaunchPage, Error>]
+        responses: [Result<LaunchPageResult, Error>]
     ) {
         sequentialResponsesByPage[page] = responses
     }
 
-    func fetchLaunchPage(
-        for rocketId: String,
-        page: Int,
-        completion: @escaping (Result<LaunchPage, Error>) -> Void
-    ) {
+    func fetchInitialLaunches(for rocketID: String) async throws -> LaunchPageResult {
+        requestedPages.append(1)
+        if var sequential = sequentialResponsesByPage[1], !sequential.isEmpty {
+            let nextResult = sequential.removeFirst()
+            sequentialResponsesByPage[1] = sequential
+            return try nextResult.get()
+        }
+        return try (responsesByPage[1] ?? .failure(TestError.missingResponse)).get()
+    }
+
+    func fetchNextLaunchPage(for rocketID: String, page: Int) async throws -> LaunchPageResult {
         requestedPages.append(page)
         if var sequential = sequentialResponsesByPage[page], !sequential.isEmpty {
             let nextResult = sequential.removeFirst()
             sequentialResponsesByPage[page] = sequential
-            completion(nextResult)
-            return
+            return try nextResult.get()
         }
-
-        completion(responsesByPage[page] ?? .failure(TestError.missingResponse))
+        return try (responsesByPage[page] ?? .failure(TestError.missingResponse)).get()
     }
 }
 
