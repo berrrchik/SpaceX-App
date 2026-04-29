@@ -1,53 +1,27 @@
 import UIKit
 import SnapKit
 
-final class SquareView: UIView, SettingsStoreObserver {
+final class SquareView: UIView {
     
     private let scrollStackView = UIScrollView()
     private let squareStack = UIStackView()
-    private let settingsStore: SettingsStore
-    private var lastItems: [(metricValue: Any?, imperialValue: Any?, metricMeasure: String, imperialMeasure: String)] = []
-    
     private var squares: [(square: UIView, valueLabel: UILabel, measureLabel: UILabel)] = []
     
-    init(settingsStore: SettingsStore) {
-        self.settingsStore = settingsStore
+    init() {
         super.init(frame: .zero)
         setupViews()
-        settingsStore.addObserver(self)
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    deinit {
-        settingsStore.removeObserver(self)
-    }
-    
-    func configure(with items: [(metricValue: Any?, imperialValue: Any?, metricMeasure: String, imperialMeasure: String)]) {
+    func configure(with items: [(value: String, unit: String, label: String)]) {
         guard items.count == squares.count else { return }
-        lastItems = items
-        updateUI(with: settingsStore.measurementPreference)
-    }
-    
-    private func updateUI(with preference: MeasurementPreference) {
-        for (index, item) in lastItems.enumerated() {
-            guard let setting = MeasurementSetting(rawValue: index) else { continue }
-            let isImperial = preference.usesImperial(for: setting)
-            let value = isImperial ? item.imperialValue : item.metricValue
-            let measureText = isImperial ? item.imperialMeasure : item.metricMeasure
-            
-            let valueText: String
-            if let doubleValue = value as? Double {
-                valueText = doubleValue.isFinite ? String(format: "%.1f", doubleValue) : "–"
-            } else if let intValue = value as? Int {
-                valueText = intValue > 0 ? String(intValue) : "–"
-            } else {
-                valueText = "–"
-            }
-            squares[index].valueLabel.text = valueText
-            squares[index].measureLabel.text = measureText
+        
+        for (index, item) in items.enumerated() {
+            squares[index].valueLabel.text = item.value
+            squares[index].measureLabel.text = "\(item.label), \(item.unit)"
         }
     }
     
@@ -121,14 +95,6 @@ final class SquareView: UIView, SettingsStoreObserver {
             
             squareStack.addArrangedSubview(square)
             squares.append((square, valueLabel, measureLabel))
-        }
-    }
-    
-    func settingsStore(_ settingsStore: SettingsStore, didUpdate preference: MeasurementPreference) {
-        if !lastItems.isEmpty {
-            updateUI(with: preference)
-        } else {
-            squares.forEach { $0.valueLabel.text = "–"; $0.measureLabel.text = "" }
         }
     }
 }

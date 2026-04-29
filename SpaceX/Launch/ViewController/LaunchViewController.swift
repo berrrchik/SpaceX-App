@@ -9,18 +9,18 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     
     let rocketId: String
     let rocketName: String
-    private let launchViewModel: LaunchViewModel
+    private let launchListViewModel: LaunchListViewModel
     private let launchView = LaunchView()
-    private var launches: [Launch] = []
-    private var errorMessage: String?
+    private var cellViewModels: [LaunchCellViewModel] = []
+    private var currentState: LaunchListState = .initialLoading
     private var hasRequestedInitialLoad = false
     private let paginationIndicator = UIActivityIndicatorView(style: .medium)
     weak var coordinator: AppCoordinating?
     
-    init(rocketId: String, rocketName: String, launchViewModel: LaunchViewModel) {
+    init(rocketId: String, rocketName: String, launchListViewModel: LaunchListViewModel) {
         self.rocketId = rocketId
         self.rocketName = rocketName
-        self.launchViewModel = launchViewModel
+        self.launchListViewModel = launchListViewModel
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -78,58 +78,75 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
         Self.logger.debug("Loading initial launches for rocket id=\(self.rocketId, privacy: .public)")
         launchView.showLoadingOverlay()
 
-        launchViewModel.fetchInitialLaunches(rocketId: rocketId) { [weak self] result in
+        launchListViewModel.loadInitialLaunches(for: rocketId) { [weak self] state in
             guard let self else { return }
-            DispatchQueue.main.async {
-                self.launchView.hideLoadingOverlay()
-                switch result {
-                case .success(let launches):
-                    Self.logger.debug("Initial launch data callback received. rocket id=\(self.rocketId, privacy: .public) count=\(launches.count, privacy: .public)")
-                    if launches.isEmpty {
-                        self.showError("Нет данных о запуске этой ракеты")
-                    } else {
-                        self.launches = launches
-                        self.errorMessage = nil
-                        self.updatePaginationFooter()
-                        self.launchView.tableView.reloadData()
-                    }
-                case .failure:
-                    Self.logger.error("Initial launch data callback failed for rocket id=\(self.rocketId, privacy: .public)")
-                    self.showError("ОКАК! Что-то пошло не так, проверьте соединение")
-                }
-            }
+            self.currentState = state
+            self.handleStateUpdate(state)
         }
     }
 
     private func loadNextPageIfNeeded(for indexPath: IndexPath) {
-        launchViewModel.loadNextPageIfNeeded(rocketId: rocketId, currentIndex: indexPath.row) { [weak self] result in
+        launchListViewModel.loadNextPageIfNeeded(
+            for: rocketId,
+            currentIndex: indexPath.row,
+            totalItems: cellViewModels.count
+        ) { [weak self] state in
             guard let self else { return }
-
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let launches):
-                    self.launches = launches
-                    self.updatePaginationFooter()
-                    self.launchView.tableView.reloadData()
-                case .failure:
-                    Self.logger.error("Next launch page callback failed for rocket id=\(self.rocketId, privacy: .public)")
-                    self.updatePaginationFooter()
-                }
-            }
+            self.currentState = state
+            self.handleStateUpdate(state)
         }
     }
     
-    private func showError(_ message: String) {
-        Self.logger.error("Showing launches error state for rocket id=\(self.rocketId, privacy: .public): \(message, privacy: .public)")
-        launchView.hideLoadingOverlay()
-        updatePaginationFooter()
-        errorMessage = message
-        launches = []
-        launchView.tableView.reloadData()
+    private func handleStateUpdate(_ state: LaunchListState) {
+        switch state {
+        case .initialLoading:
+            break
+            
+        case .content(let viewModels):
+            Self.logger.debug("Launch content state. rocket id=\(self.rocketId, privacy: .public) count=\(viewModels.count, privacy: .public)")
+            launchView.hideLoadingOverlay()
+            cellViewModels = viewModels
+            updatePaginationFooter()
+            launchView.tableView.reloadData()
+            
+        case .paginating(let viewModels):
+            cellViewModels = viewModels
+            updatePaginationFooter()
+            
+        case .empty:
+            Self.logger.debug("Launch empty state for rocket id=\(self.rocketId, privacy: .public)")
+            launchView.hideLoadingOverlay()
+            cellViewModels = []
+            updatePaginationFooter()
+            launchView.tableView.reloadData()
+            
+        case .error(let message):
+            Self.logger.error("Launch error state for rocket id=\(self.rocketId, privacy: .public): \(message, privacy: .public)")
+            launchView.hideLoadingOverlay()
+            cellViewModels = []
+            updatePaginationFooter()
+            launchView.tableView.reloadData()
+            showErrorAlert(message)
+        }
+    }
+    
+    private func showErrorAlert(_ message: String) {
+        let alert = UIAlertController(
+            title: "Ошибка",
+            message: message,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
 
     private func updatePaginationFooter() {
-        let isPaginating = launchViewModel.isLoadingPage(for: rocketId) && launchViewModel.hasLoadedLaunches(for: rocketId)
+        let isPaginating: Bool
+        if case .paginating = currentState {
+            isPaginating = true
+        } else {
+            isPaginating = false
+        }
 
         if isPaginating {
             paginationIndicator.startAnimating()
@@ -142,18 +159,28 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     }
         
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return errorMessage != nil ? 1 : launches.count
+        switch currentState {
+        case .empty:
+            return 1
+        case .error:
+            return 1
+        default:
+            return cellViewModels.count
+        }
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if let errorMessage = errorMessage {
-            return createErrorCell(with: errorMessage)
-        } else {
+        switch currentState {
+        case .empty:
+            return createMessageCell(with: "Нет данных о запуске этой ракеты")
+        case .error(let message):
+            return createMessageCell(with: message)
+        default:
             return createLaunchCell(for: indexPath)
         }
     }
     
-    private func createErrorCell(with message: String) -> UITableViewCell {
+    private func createMessageCell(with message: String) -> UITableViewCell {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
         cell.backgroundColor = AppColors.clear
         cell.textLabel?.text = message
@@ -168,17 +195,22 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     private func createLaunchCell(for indexPath: IndexPath) -> UITableViewCell {
         let cell = launchView.tableView.dequeueReusableCell(withIdentifier: "LaunchCell", for: indexPath)
         guard let launchCell = cell as? LaunchCell else { return cell }
-        let launch = launches[indexPath.row]
-        launchCell.configure(with: launch)
+        let viewModel = cellViewModels[indexPath.row]
+        launchCell.configure(with: viewModel)
         return launchCell
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return errorMessage != nil ? Constants.errorRowHeight : tableView.rowHeight
+        switch currentState {
+        case .empty, .error:
+            return Constants.errorRowHeight
+        default:
+            return tableView.rowHeight
+        }
     }
 
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        guard errorMessage == nil else { return }
+        guard case .content = currentState else { return }
         updatePaginationFooter()
         loadNextPageIfNeeded(for: indexPath)
     }

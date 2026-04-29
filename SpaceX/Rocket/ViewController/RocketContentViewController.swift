@@ -9,8 +9,8 @@ class RocketContentViewController: UIViewController {
     private var previousStatusBarHidden = false
     private var currentRocket: Rocket?
     
-    init(settingsStore: SettingsStore) {
-        self.rocketView = RocketView(settingsStore: settingsStore)
+    init() {
+        self.rocketView = RocketView()
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -51,10 +51,8 @@ class RocketContentViewController: UIViewController {
         return frame.minY < view.safeAreaInsets.top
     }
     
-    func configure(with rocket: Rocket) {
-        let randomImageURLString = rocket.flickrImages.randomElement()
-        let imageURL: URL? = randomImageURLString.flatMap { URL(string: $0) }
-        rocketView.configure(with: rocket, imageURL: imageURL)
+    func configure(with displayModel: RocketDisplayModel, rocket: Rocket) {
+        rocketView.configure(with: displayModel)
         self.currentRocket = rocket
     }
     

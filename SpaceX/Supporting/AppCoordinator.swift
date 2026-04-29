@@ -37,7 +37,9 @@ class AppCoordinator: Coordinator {
     func start() {
         let rocketViewController = RocketViewController(
             rocketViewModel: appContainer.rocketViewModel,
-            settingsStore: appContainer.settingsStore
+            settingsStore: appContainer.settingsStore,
+            rocketFormatter: appContainer.rocketFormatter,
+            dateFormatter: appContainer.dateFormatter
         )
         rocketViewController.coordinator = self
         navigationController.pushViewController(rocketViewController, animated: false)
@@ -79,7 +81,7 @@ class AppCoordinator: Coordinator {
         let launchViewController = LaunchViewController(
             rocketId: rocket.id,
             rocketName: rocket.name,
-            launchViewModel: appContainer.launchViewModel
+            launchListViewModel: appContainer.launchListViewModel
         )
         launchViewController.coordinator = self
         

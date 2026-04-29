@@ -23,8 +23,10 @@ final class AppContainer {
     lazy var launchRemoteDataSource: LaunchRemoteDataSourceProtocol = LaunchRemoteDataSource(httpClient: httpClient)
     lazy var rocketRepository: RocketRepositoryProtocol = RocketRepository(remoteDataSource: rocketRemoteDataSource)
     lazy var launchRepository: LaunchRepositoryProtocol = LaunchRepository(remoteDataSource: launchRemoteDataSource)
+    lazy var dateFormatter: DateFormatting = DefaultDateFormatter()
+    lazy var rocketFormatter: RocketFormatting = DefaultRocketFormatter()
     lazy var rocketViewModel = RocketViewModel(rocketRepository: rocketRepository)
-    lazy var launchViewModel = LaunchViewModel(launchRepository: launchRepository)
+    lazy var launchListViewModel = LaunchListViewModel(launchRepository: launchRepository, dateFormatter: dateFormatter)
 
     init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults

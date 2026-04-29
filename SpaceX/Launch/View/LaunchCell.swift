@@ -17,15 +17,10 @@ final class LaunchCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(with launch: Launch) {
-        nameLabel.text = launch.name
-        dateLabel.text = launch.formattedDate
-        
-        if let success = launch.success {
-            statusImageView.image = UIImage(named: success ? "LaunchSuccess" : "LaunchFail")
-        } else {
-            statusImageView.image = UIImage(named: "unknown")
-        }
+    func configure(with viewModel: LaunchCellViewModel) {
+        nameLabel.text = viewModel.name
+        dateLabel.text = viewModel.date
+        statusImageView.image = UIImage(named: viewModel.statusImageName)
     }
     
     private func setupView() {

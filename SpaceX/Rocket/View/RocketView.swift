@@ -52,8 +52,8 @@ final class RocketView: UIView {
     
     let showLaunchesButton = UIButton()
     
-    init(settingsStore: SettingsStore) {
-        self.squareView = SquareView(settingsStore: settingsStore)
+    init() {
+        self.squareView = SquareView()
         super.init(frame: .zero)
         setupView()
     }
@@ -62,10 +62,10 @@ final class RocketView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(with rocket: Rocket, imageURL: URL?) {
-        self.imageURL = imageURL
+    func configure(with displayModel: RocketDisplayModel) {
+        self.imageURL = displayModel.imageURL
         
-        if let imageURL = imageURL {
+        if let imageURL = displayModel.imageURL {
             imageView.kf.setImage(
                 with: imageURL,
                 placeholder: UIImage(named: "SomethingWentWrong"),
@@ -78,25 +78,25 @@ final class RocketView: UIView {
             imageView.image = UIImage(named: "SomethingWentWrong")
         }
         
-        rocketNameLabel.text = rocket.name
+        rocketNameLabel.text = displayModel.name
         
-        firstFlight.text = rocket.firstFlightDate
-        country.text = rocket.country
-        costPerLaunch.text = rocket.costPerLaunch.roundedWithAbbreviations
+        firstFlight.text = displayModel.firstFlightDate
+        country.text = displayModel.country
+        costPerLaunch.text = displayModel.costPerLaunch
         
-        enginesCountFirstStage.text = String(rocket.firstStage.engines)
-        fuelAmountTonsFirstStage.text = String(rocket.firstStage.fuelAmountTons)
-        burnTimeSECFirstStage.text = String(rocket.firstStage.burnTimeSec ?? 0)
+        enginesCountFirstStage.text = displayModel.firstStageEngines
+        fuelAmountTonsFirstStage.text = displayModel.firstStageFuelTons
+        burnTimeSECFirstStage.text = displayModel.firstStageBurnTime
         
-        enginesCountSecondtStage.text = String(rocket.secondStage.engines)
-        fuelAmountTonsSecondtStage.text = String(rocket.secondStage.fuelAmountTons)
-        burnTimeSECSecondtStage.text = String(rocket.secondStage.burnTimeSec ?? 0)
+        enginesCountSecondtStage.text = displayModel.secondStageEngines
+        fuelAmountTonsSecondtStage.text = displayModel.secondStageFuelTons
+        burnTimeSECSecondtStage.text = displayModel.secondStageBurnTime
         
         squareView.configure(with: [
-            (metricValue: rocket.height.meters, imperialValue: rocket.height.feet, metricMeasure: "Высота, m", imperialMeasure: "Высота, ft"),
-            (metricValue: rocket.diameter.meters, imperialValue: rocket.diameter.feet, metricMeasure: "Диаметр, m", imperialMeasure: "Диаметр, ft"),
-            (metricValue: rocket.mass.kg, imperialValue: rocket.mass.lb, metricMeasure: "Масса, kg", imperialMeasure: "Масса, lb"),
-            (metricValue: rocket.payloadWeights.first?.kg, imperialValue: rocket.payloadWeights.first?.lb, metricMeasure: "Полезная нагрузка, kg", imperialMeasure: "Полезная нагрузка, lb")
+            (value: displayModel.heightValue, unit: displayModel.heightUnit, label: "Высота"),
+            (value: displayModel.diameterValue, unit: displayModel.diameterUnit, label: "Диаметр"),
+            (value: displayModel.massValue, unit: displayModel.massUnit, label: "Масса"),
+            (value: displayModel.payloadWeightValue, unit: displayModel.payloadWeightUnit, label: "Полезная нагрузка")
         ])
     }
     
@@ -367,7 +367,7 @@ private extension RocketView {
 }
 
 #Preview {
-    let rocketView = RocketView(settingsStore: UserDefaultsSettingsStore())
+    let rocketView = RocketView()
     let viewController = UIViewController()
     viewController.view = rocketView
     return viewController

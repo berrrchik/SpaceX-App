@@ -9,6 +9,8 @@ class RocketViewController: UIViewController {
     
     private let rocketViewModel: RocketViewModel
     private let settingsStore: SettingsStore
+    private let rocketFormatter: RocketFormatting
+    private let dateFormatter: DateFormatting
     private let pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal)
     private let pageControl = UIPageControl()
     private var rocketViewControllers: [RocketContentViewController] = []
@@ -17,10 +19,14 @@ class RocketViewController: UIViewController {
     
     init(
         rocketViewModel: RocketViewModel,
-        settingsStore: SettingsStore
+        settingsStore: SettingsStore,
+        rocketFormatter: RocketFormatting = DefaultRocketFormatter(),
+        dateFormatter: DateFormatting = DefaultDateFormatter()
     ) {
         self.rocketViewModel = rocketViewModel
         self.settingsStore = settingsStore
+        self.rocketFormatter = rocketFormatter
+        self.dateFormatter = dateFormatter
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -123,13 +129,21 @@ class RocketViewController: UIViewController {
     }
 
     private func setupPages() {
+        let preferences = settingsStore.measurementPreference
+        
         rocketViewControllers = (0..<rocketViewModel.numberOfRockets).compactMap { index in
             guard let rocket = rocketViewModel.rocket(at: index) else {
                 return nil
             }
 
-            let vc = RocketContentViewController(settingsStore: settingsStore)
-            vc.configure(with: rocket)
+            let displayModel = rocketFormatter.formatForDisplay(
+                rocket,
+                preferences: preferences,
+                dateFormatter: dateFormatter
+            )
+            
+            let vc = RocketContentViewController()
+            vc.configure(with: displayModel, rocket: rocket)
             vc.coordinator = coordinator
             vc.pageIndex = index
             return vc
