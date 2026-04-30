@@ -1,6 +1,6 @@
 import Foundation
 
-struct Launch {
+struct Launch: Codable {
     let id: String
     let name: String
     let dateUtc: String

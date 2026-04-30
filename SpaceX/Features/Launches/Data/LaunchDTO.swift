@@ -32,4 +32,29 @@ struct CoreDTO: Decodable {
 struct CrewMemberDTO: Decodable {
     let crew: String?
     let role: String?
+
+    init(crew: String?, role: String?) {
+        self.crew = crew
+        self.role = role
+    }
+
+    init(from decoder: Decoder) throws {
+        if let singleValue = try? decoder.singleValueContainer(),
+           let crewId = try? singleValue.decode(String.self) {
+            self.init(crew: crewId, role: nil)
+            return
+        }
+
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let crew = try container.decodeIfPresent(String.self, forKey: .crew)
+            ?? container.decodeIfPresent(String.self, forKey: .id)
+        let role = try container.decodeIfPresent(String.self, forKey: .role)
+        self.init(crew: crew, role: role)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case crew
+        case role
+        case id
+    }
 }

@@ -130,6 +130,7 @@ final class LaunchListViewModel {
                 statusImageName = "unknown"
             }
             return LaunchCellViewModel(
+                id: launch.id,
                 name: launch.name,
                 date: launch.formattedDate,
                 statusImageName: statusImageName

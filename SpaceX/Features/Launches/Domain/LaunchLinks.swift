@@ -1,6 +1,6 @@
 import Foundation
 
-struct LaunchLinks {
+struct LaunchLinks: Codable {
     let wikipedia: URL?
     let article: URL?
     let webcast: URL?

@@ -1,6 +1,6 @@
 import Foundation
 
-struct CrewMember {
+struct CrewMember: Codable {
     let crewId: String
     let role: String?
 }
