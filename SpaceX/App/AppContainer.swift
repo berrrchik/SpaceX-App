@@ -19,6 +19,13 @@ final class AppContainer {
     lazy var networkMonitor: NetworkMonitorProtocol = NetworkMonitor()
     lazy var rocketRemoteDataSource: RocketRemoteDataSourceProtocol = RocketRemoteDataSource(httpClient: httpClient)
     lazy var launchRemoteDataSource: LaunchRemoteDataSourceProtocol = LaunchRemoteDataSource(httpClient: httpClient)
+    lazy var launchDetailRemoteDataSource: LaunchDetailRemoteDataSourceProtocol = LaunchDetailRemoteDataSource(httpClient: httpClient)
+    lazy var launchpadRemoteDataSource: LaunchpadRemoteDataSourceProtocol = LaunchpadRemoteDataSource(httpClient: httpClient)
+    lazy var rocketDetailRemoteDataSource: RocketDetailRemoteDataSourceProtocol = RocketDetailRemoteDataSource(httpClient: httpClient)
+    lazy var payloadRemoteDataSource: PayloadRemoteDataSourceProtocol = PayloadRemoteDataSource(httpClient: httpClient)
+    lazy var crewRemoteDataSource: CrewRemoteDataSourceProtocol = CrewRemoteDataSource(httpClient: httpClient)
+    lazy var capsuleRemoteDataSource: CapsuleRemoteDataSourceProtocol = CapsuleRemoteDataSource(httpClient: httpClient)
+    lazy var shipRemoteDataSource: ShipRemoteDataSourceProtocol = ShipRemoteDataSource(httpClient: httpClient)
     lazy var rocketCacheStore: RocketCacheStoreProtocol = UserDefaultsRocketCacheStore(defaults: userDefaults)
     lazy var launchCacheStore: LaunchCacheStoreProtocol = UserDefaultsLaunchCacheStore(defaults: userDefaults)
     lazy var rocketRepository: RocketRepositoryProtocol = RocketRepository(
@@ -31,6 +38,16 @@ final class AppContainer {
         cacheStore: launchCacheStore,
         networkMonitor: networkMonitor
     )
+    lazy var launchDetailRepository: LaunchDetailRepositoryProtocol = LaunchDetailRepository(
+        launchDetailDataSource: launchDetailRemoteDataSource,
+        launchpadDataSource: launchpadRemoteDataSource,
+        rocketDataSource: rocketDetailRemoteDataSource,
+        payloadDataSource: payloadRemoteDataSource,
+        crewDataSource: crewRemoteDataSource,
+        capsuleDataSource: capsuleRemoteDataSource,
+        shipDataSource: shipRemoteDataSource,
+        cacheStore: launchCacheStore
+    )
     lazy var dateFormatter: DateFormatting = DefaultDateFormatter()
     lazy var rocketFormatter: RocketFormatting = DefaultRocketFormatter()
     lazy var rocketViewModel = RocketViewModel(rocketRepository: rocketRepository)
@@ -42,5 +59,9 @@ final class AppContainer {
 
     func makeSettingsViewModel() -> SettingsViewModel {
         SettingsViewModel(settingsStore: settingsStore)
+    }
+
+    func makeLaunchDetailViewModel(launchId: String) -> LaunchDetailViewModel {
+        LaunchDetailViewModel(launchId: launchId, repository: launchDetailRepository)
     }
 }
