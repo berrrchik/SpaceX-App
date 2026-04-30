@@ -53,6 +53,9 @@ private struct LaunchesQueryEndpoint: APIEndpoint {
                 limit: limit,
                 page: page,
                 sort: ["date_utc": "desc"],
+                // List view only needs these fields.
+                // Nested arrays (cores, payloads, crew, ships, capsules, links)
+                // are fetched separately by LaunchDetailRemoteDataSource (F-5).
                 select: [
                     "id",
                     "name",
@@ -60,14 +63,14 @@ private struct LaunchesQueryEndpoint: APIEndpoint {
                     "success",
                     "rocket",
                     "upcoming",
-                    "details",
-                    "launchpad",
-                    "links",
-                    "cores",
-                    "payloads",
-                    "crew",
-                    "ships",
-                    "capsules"
+                    "details"
+                    // "launchpad",
+                    // "links",
+                    // "cores",
+                    // "payloads",
+                    // "crew",
+                    // "ships",
+                    // "capsules"
                 ]
             )
         )
