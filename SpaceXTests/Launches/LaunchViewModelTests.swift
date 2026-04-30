@@ -263,6 +263,10 @@ private final class MockLaunchRepository: LaunchRepositoryProtocol {
         }
         return try (responsesByPage[page] ?? .failure(TestError.missingResponse)).get()
     }
+
+    func fetchAllCachedLaunches(for rocketID: String) -> [Launch] {
+        []
+    }
 }
 
 private enum TestError: Error {

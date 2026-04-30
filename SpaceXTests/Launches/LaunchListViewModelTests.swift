@@ -237,6 +237,10 @@ private final class MockLaunchListRepository: LaunchRepositoryProtocol {
         fetchNextPageCallCount += 1
         return try (nextPageResults[page] ?? .failure(MockError.failed)).get()
     }
+
+    func fetchAllCachedLaunches(for rocketID: String) -> [Launch] {
+        []
+    }
 }
 
 private enum MockError: Error {
