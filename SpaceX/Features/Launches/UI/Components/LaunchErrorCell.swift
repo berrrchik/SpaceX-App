@@ -1,18 +1,14 @@
 import UIKit
+import SnapKit
 
-final class LaunchErrorCell: UITableViewCell {
+final class LaunchErrorCell: UICollectionViewCell {
     static let reuseId = "LaunchErrorCell"
 
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        backgroundColor = AppColors.clear
-        contentView.backgroundColor = AppColors.clear
+    private let messageLabel = UILabel()
 
-        textLabel?.textColor = AppColors.textGray56
-        textLabel?.font = AppFonts.regular20
-        textLabel?.textAlignment = .center
-        textLabel?.numberOfLines = 0
-        selectionStyle = .none
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupView()
     }
 
     required init?(coder: NSCoder) {
@@ -20,6 +16,23 @@ final class LaunchErrorCell: UITableViewCell {
     }
 
     func configure(message: String) {
-        textLabel?.text = message
+        messageLabel.text = message
+        isAccessibilityElement = true
+        accessibilityLabel = message
+    }
+
+    private func setupView() {
+        backgroundColor = AppColors.clear
+        contentView.backgroundColor = AppColors.clear
+
+        messageLabel.textColor = AppColors.textGray56
+        messageLabel.font = AppFonts.regular20
+        messageLabel.textAlignment = .center
+        messageLabel.numberOfLines = 0
+
+        contentView.addSubview(messageLabel)
+        messageLabel.snp.makeConstraints { make in
+            make.edges.equalToSuperview().inset(8)
+        }
     }
 }

@@ -1,15 +1,16 @@
 import UIKit
 import SnapKit
 
-final class LaunchCell: UITableViewCell {
+final class LaunchCell: UICollectionViewCell {
+    static let reuseId = "LaunchCell"
     
     private let cardView = UIView()
     private let nameLabel = UILabel()
     private let dateLabel = UILabel()
     private let statusImageView = UIImageView()
     
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         setupView()
     }
     
@@ -21,9 +22,12 @@ final class LaunchCell: UITableViewCell {
         nameLabel.text = viewModel.name
         dateLabel.text = viewModel.date
         statusImageView.image = UIImage(named: viewModel.statusImageName)
+        isAccessibilityElement = true
+        accessibilityLabel = "\(viewModel.name), \(viewModel.date)"
     }
     
     private func setupView() {
+        backgroundColor = AppColors.clear
         contentView.backgroundColor = AppColors.black
         setupCardView()
         setupNameLabel()
