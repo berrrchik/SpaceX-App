@@ -1,6 +1,6 @@
 import Foundation
 
-struct Rocket {
+struct Rocket: Codable {
     let id: String
     let name: String
     let country: String
@@ -15,23 +15,23 @@ struct Rocket {
     let flickrImages: [String]
 }
 
-struct MeasureSize {
+struct MeasureSize: Codable {
     let meters: Double?
     let feet: Double?
 }
 
-struct MeasureWeight {
+struct MeasureWeight: Codable {
     let kg: Int
     let lb: Int
 }
 
-struct FirstStage {
+struct FirstStage: Codable {
     let engines: Int
     let fuelAmountTons: Double
     let burnTimeSec: Int?
 }
 
-struct SecondStage {
+struct SecondStage: Codable {
     let engines: Int
     let fuelAmountTons: Double
     let burnTimeSec: Int?
