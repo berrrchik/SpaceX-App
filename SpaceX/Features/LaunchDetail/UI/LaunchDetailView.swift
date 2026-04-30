@@ -5,6 +5,7 @@ import Kingfisher
 final class LaunchDetailView: UIView {
     let scrollView = UIScrollView()
     private let contentStack = UIStackView()
+    private let loadingOverlayView = LoadingView()
 
     private let heroImageView = UIImageView()
     private let missionTitleLabel = UILabel()
@@ -139,6 +140,23 @@ final class LaunchDetailView: UIView {
         contentStack.addArrangedSubview(makeSection(title: L10n.launchDetailShipsTitle, valueLabel: shipsValueLabel))
         contentStack.addArrangedSubview(makeSection(title: L10n.launchDetailCapsulesTitle, valueLabel: capsulesValueLabel))
         contentStack.addArrangedSubview(makeLinksSection())
+
+        addSubview(loadingOverlayView)
+        loadingOverlayView.isHidden = true
+        loadingOverlayView.isUserInteractionEnabled = false
+        loadingOverlayView.snp.makeConstraints { make in
+            make.edges.equalTo(safeAreaLayoutGuide)
+        }
+    }
+
+    func showLoadingOverlay() {
+        loadingOverlayView.isHidden = false
+        loadingOverlayView.startRotationAnimation()
+    }
+
+    func hideLoadingOverlay() {
+        loadingOverlayView.isHidden = true
+        loadingOverlayView.stopRotationAnimation()
     }
 
     private func makeCard() -> UIView {

@@ -34,14 +34,20 @@ final class LaunchDetailViewController: UIViewController {
 
     private func handle(state: LoadableState<LaunchDetail>) {
         switch state {
+        case .idle:
+            contentView.hideLoadingOverlay()
+        case .loading:
+            contentView.showLoadingOverlay()
         case .loaded(let detail, _):
+            contentView.hideLoadingOverlay()
             contentView.render(detail: detail)
         case .failed(let message, _):
+            contentView.hideLoadingOverlay()
             let alert = UIAlertController(title: L10n.alertErrorTitle, message: message, preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: L10n.alertOk, style: .default))
             present(alert, animated: true)
-        case .idle, .loading, .empty:
-            break
+        case .empty:
+            contentView.hideLoadingOverlay()
         }
     }
 }
