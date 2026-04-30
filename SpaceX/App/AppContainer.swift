@@ -8,14 +8,16 @@ final class AppContainer {
     lazy var requestBuilder: RequestBuilding = RequestBuilder(baseURL: baseURL)
     lazy var urlSession: URLSession = {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 8
-        configuration.timeoutIntervalForResource = 20
-        configuration.waitsForConnectivity = false
-        configuration.requestCachePolicy = .useProtocolCachePolicy
-        configuration.urlCache = URLCache(
-            memoryCapacity: 20 * 1024 * 1024,
-            diskCapacity: 100 * 1024 * 1024
-        )
+        // 30 s per request gives the SpaceX API enough time to respond even on
+        // slower connections (was 8 s, which fired before the server replied).
+        configuration.timeoutIntervalForRequest = 30
+        // 60 s total resource window keeps large paginated responses from timing out.
+        configuration.timeoutIntervalForResource = 60
+        // Wait for the network to become available instead of failing immediately.
+        configuration.waitsForConnectivity = true
+        // POST responses must not be served from cache.
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        configuration.urlCache = nil
         return URLSession(configuration: configuration)
     }()
     lazy var httpClient: HTTPClient = URLSessionHTTPClient(session: urlSession, requestBuilder: requestBuilder)
