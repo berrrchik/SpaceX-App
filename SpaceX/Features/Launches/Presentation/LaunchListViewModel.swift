@@ -1,19 +1,11 @@
 import Foundation
 
-enum LaunchListState {
-    case initialLoading
-    case content([LaunchCellViewModel])
-    case paginating([LaunchCellViewModel])
-    case empty
-    case error(String)
-}
-
 final class LaunchListViewModel {
     private static let logger = AppLogger.make("LaunchListViewModel")
 
     private let launchRepository: LaunchRepositoryProtocol
     private let dateFormatter: DateFormatting
-    private(set) var state: LaunchListState = .initialLoading
+    private(set) var state: LoadableState<[LaunchCellViewModel]> = .idle
 
     // Pagination state
     private var currentPage: Int = 1
@@ -28,8 +20,9 @@ final class LaunchListViewModel {
         self.dateFormatter = dateFormatter
     }
 
-    func loadInitialLaunches(for rocketId: String, completion: @escaping (LaunchListState) -> Void) {
-        state = .initialLoading
+    func loadInitialLaunches(for rocketId: String, completion: @escaping (LoadableState<[LaunchCellViewModel]>) -> Void) {
+        state = .loading
+        completion(state)
         currentPage = 1
         loadedAll = false
         seenLaunchIDs = []
@@ -48,11 +41,11 @@ final class LaunchListViewModel {
                         "Initial launches loaded. rocket=\(rocketId, privacy: .public) received=\(result.launches.count, privacy: .public) appended=\(newLaunches.count, privacy: .public) hasNextPage=\(result.hasNextPage, privacy: .public) loadedAll=\(self.loadedAll, privacy: .public)"
                     )
                     if viewModels.isEmpty {
-                        self.state = .empty
-                        completion(.empty)
+                        self.state = .empty(message: L10n.launchesNoData)
+                        completion(self.state)
                     } else {
-                        self.state = .content(viewModels)
-                        completion(.content(viewModels))
+                        self.state = .loaded(viewModels, isStale: result.isStale)
+                        completion(self.state)
                     }
                 }
             } catch {
@@ -61,9 +54,10 @@ final class LaunchListViewModel {
                     Self.logger.error(
                         "Initial launches failed. rocket=\(rocketId, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
                     )
-                    let errorState = LaunchListState.error(L10n.launchesNetworkError)
-                    self.state = errorState
-                    completion(errorState)
+                    let cached = self.launchRepository.fetchAllCachedLaunches(for: rocketId)
+                    let cachedVMs = cached.isEmpty ? nil : self.mapToViewModels(cached)
+                    self.state = .failed(message: L10n.launchesNetworkError, cachedValue: cachedVMs)
+                    completion(self.state)
                 }
             }
         }
@@ -73,17 +67,17 @@ final class LaunchListViewModel {
         for rocketId: String,
         currentIndex: Int,
         totalItems: Int,
-        completion: @escaping (LaunchListState) -> Void
+        completion: @escaping (LoadableState<[LaunchCellViewModel]>) -> Void
     ) {
         // Stop if pagination has finished
         guard !loadedAll else { return }
-        // Only trigger from a stable content state; .paginating acts as the in-flight guard
-        guard case .content(let currentViewModels) = state else { return }
+        guard case .loaded(let currentViewModels, _) = state else { return }
 
         let threshold = max(0, totalItems - 5)
         guard currentIndex >= threshold else { return }
 
-        state = .paginating(currentViewModels)
+        state = .loading
+        completion(state)
         currentPage += 1
         let pageToFetch = currentPage
         Self.logger.debug(
@@ -103,8 +97,8 @@ final class LaunchListViewModel {
                     Self.logger.debug(
                         "Next page loaded. rocket=\(rocketId, privacy: .public) page=\(pageToFetch, privacy: .public) received=\(result.launches.count, privacy: .public) appended=\(newLaunches.count, privacy: .public) nextOffset=\(pageToFetch * 20, privacy: .public) hasNextPage=\(result.hasNextPage, privacy: .public) loadedAll=\(self.loadedAll, privacy: .public)"
                     )
-                    self.state = .content(allViewModels)
-                    completion(.content(allViewModels))
+                    self.state = .loaded(allViewModels, isStale: result.isStale)
+                    completion(self.state)
                 }
             } catch {
                 DispatchQueue.main.async { [weak self] in
@@ -114,8 +108,8 @@ final class LaunchListViewModel {
                     Self.logger.error(
                         "Next page failed. rocket=\(rocketId, privacy: .public) page=\(pageToFetch, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
                     )
-                    self.state = .content(currentViewModels)
-                    completion(.content(currentViewModels))
+                    self.state = .failed(message: L10n.launchesNetworkError, cachedValue: currentViewModels)
+                    completion(self.state)
                 }
             }
         }
