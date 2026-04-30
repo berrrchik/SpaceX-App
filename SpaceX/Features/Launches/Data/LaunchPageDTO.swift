@@ -1,6 +1,6 @@
 import Foundation
 
-struct LaunchPageDTO: Codable {
+struct LaunchPageDTO: Decodable {
     let docs: [LaunchDTO]
     let hasNextPage: Bool
     let nextPage: Int?
