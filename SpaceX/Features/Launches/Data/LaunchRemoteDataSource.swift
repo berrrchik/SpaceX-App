@@ -18,11 +18,11 @@ final class LaunchRemoteDataSource: LaunchRemoteDataSourceProtocol {
 }
 
 private struct LaunchQueryRequest: Encodable {
-    let query: LaunchQuery
+    let query: LaunchQueryPayload
     let options: LaunchQueryOptions
 }
 
-private struct LaunchQuery: Encodable {
+private struct LaunchQueryPayload: Encodable {
     let rocket: String
 }
 
@@ -47,7 +47,7 @@ private struct LaunchesQueryEndpoint: APIEndpoint {
     
     init(rocketID: String, page: Int, limit: Int) {
         let request = LaunchQueryRequest(
-            query: LaunchQuery(rocket: rocketID),
+            query: LaunchQueryPayload(rocket: rocketID),
             options: LaunchQueryOptions(
                 pagination: true,
                 limit: limit,

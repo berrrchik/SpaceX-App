@@ -10,13 +10,11 @@ final class LaunchViewController: UIViewController, UICollectionViewDelegate {
     private let launchListViewModel: LaunchListViewModel
     private let launchView = LaunchView()
     private var cellViewModels: [LaunchCellViewModel] = []
-    private var filters: [LaunchFilterItem] = []
+    private var query = LaunchQuery()
     private var currentState: LoadableState<[LaunchCellViewModel]> = .idle
     private var hasRequestedInitialLoad = false
     private var isPaginating = false
     private var dataSource: DataSource?
-    private let cachedBadgeLabel = UILabel()
-    private lazy var cachedBadgeItem = UIBarButtonItem(customView: cachedBadgeLabel)
     weak var coordinator: AppCoordinating?
     
     init(rocketId: String, rocketName: String, launchListViewModel: LaunchListViewModel) {
@@ -36,7 +34,8 @@ final class LaunchViewController: UIViewController, UICollectionViewDelegate {
         setupViewController()
         setupCollectionView()
         configureDataSource()
-        setupCachedBadge()
+        setupControlButtons()
+        configureDropdownMenus()
         setupBackButtonHandler()
     }
     
@@ -81,17 +80,37 @@ final class LaunchViewController: UIViewController, UICollectionViewDelegate {
         )
     }
 
-    private func setupCachedBadge() {
-        cachedBadgeLabel.text = L10n.launchesCachedBadge
-        cachedBadgeLabel.font = AppFonts.bold14
-        cachedBadgeLabel.textColor = AppColors.white
-        cachedBadgeLabel.backgroundColor = AppColors.darkGray.withAlphaComponent(0.8)
-        cachedBadgeLabel.layer.cornerRadius = 8
-        cachedBadgeLabel.layer.masksToBounds = true
-        cachedBadgeLabel.textAlignment = .center
-        cachedBadgeLabel.frame = CGRect(x: 0, y: 0, width: 64, height: 24)
-        cachedBadgeLabel.accessibilityLabel = L10n.launchesStaleBanner
-        navigationItem.rightBarButtonItem = nil
+    private func setupControlButtons() {
+        [launchView.statusButton, launchView.yearButton, launchView.sortButton].forEach {
+            $0.setTitleColor(AppColors.white, for: .normal)
+            $0.titleLabel?.font = AppFonts.bold18
+            $0.showsMenuAsPrimaryAction = true
+        }
+        launchView.sortButton.showsMenuAsPrimaryAction = false
+        launchView.sortButton.addTarget(self, action: #selector(toggleSortOrder), for: .touchUpInside)
+        updateSortButtonTitle()
+    }
+
+    private func configureDropdownMenus() {
+        launchView.statusButton.setTitle(statusTitle(for: query.statusFilter) + " ▾", for: .normal)
+        let statusActions = [
+            UIAction(title: L10n.launchesFilterAll, state: query.statusFilter == .all ? .on : .off) { [weak self] _ in self?.setStatus(.all) },
+            UIAction(title: L10n.launchesFilterSuccessful, state: query.statusFilter == .successful ? .on : .off) { [weak self] _ in self?.setStatus(.successful) },
+            UIAction(title: L10n.launchesFilterFailed, state: query.statusFilter == .failed ? .on : .off) { [weak self] _ in self?.setStatus(.failed) },
+            UIAction(title: L10n.launchesFilterUpcoming, state: query.statusFilter == .upcoming ? .on : .off) { [weak self] _ in self?.setStatus(.upcoming) }
+        ]
+        launchView.statusButton.menu = UIMenu(children: statusActions)
+
+        launchView.yearButton.setTitle(yearTitle() + " ▾", for: .normal)
+        let resetYear = UIAction(title: L10n.launchesYearDropdown, state: query.year == nil ? .on : .off) { [weak self] _ in
+            self?.setYear(nil)
+        }
+        let yearActions = launchListViewModel.availableYears().map { year in
+            UIAction(title: String(year), state: query.year == year ? .on : .off) { [weak self] _ in
+                self?.setYear(year)
+            }
+        }
+        launchView.yearButton.menu = UIMenu(children: [resetYear] + yearActions)
     }
     
     private func setupBackButtonHandler() {
@@ -128,7 +147,6 @@ final class LaunchViewController: UIViewController, UICollectionViewDelegate {
         case .idle:
             launchView.hideLoadingOverlay()
             isPaginating = false
-            setCachedBadgeVisible(false)
             applySnapshot(for: state, animating: false)
         case .loading:
             let isInitialLoading = cellViewModels.isEmpty
@@ -142,14 +160,14 @@ final class LaunchViewController: UIViewController, UICollectionViewDelegate {
                     self?.launchView.collectionView.reloadData()
                 }
             }
-            setCachedBadgeVisible(false)
             
         case .loaded(let viewModels, let isStale):
             Self.logger.debug("Launch content state. rocket id=\(self.rocketId, privacy: .public) count=\(viewModels.count, privacy: .public)")
             launchView.hideLoadingOverlay()
             isPaginating = false
             cellViewModels = viewModels
-            setCachedBadgeVisible(isStale)
+            _ = isStale
+            configureDropdownMenus()
             applySnapshot(for: state, animating: hasRequestedInitialLoad)
 
         case .empty(let message):
@@ -157,8 +175,8 @@ final class LaunchViewController: UIViewController, UICollectionViewDelegate {
             launchView.hideLoadingOverlay()
             isPaginating = false
             cellViewModels = []
-            setCachedBadgeVisible(false)
             currentState = .empty(message: message)
+            configureDropdownMenus()
             applySnapshot(for: currentState, animating: true)
 
         case .failed(let message, let cachedValue):
@@ -167,20 +185,15 @@ final class LaunchViewController: UIViewController, UICollectionViewDelegate {
             isPaginating = false
             if let cachedValue, !cachedValue.isEmpty {
                 cellViewModels = cachedValue
-                setCachedBadgeVisible(true)
                 currentState = .failed(message: message, cachedValue: cachedValue)
             } else {
                 cellViewModels = []
-                setCachedBadgeVisible(false)
                 currentState = .empty(message: message)
             }
+            configureDropdownMenus()
             applySnapshot(for: currentState, animating: true)
             showErrorAlert(message)
         }
-    }
-
-    private func setCachedBadgeVisible(_ isVisible: Bool) {
-        navigationItem.rightBarButtonItem = isVisible ? cachedBadgeItem : nil
     }
     
     private func showErrorAlert(_ message: String) {
@@ -233,7 +246,7 @@ final class LaunchViewController: UIViewController, UICollectionViewDelegate {
     }
 
     private func applySnapshot(for state: LoadableState<[LaunchCellViewModel]>, animating: Bool) {
-        let snapshot = LaunchesSnapshotBuilder.make(state: state, filters: filters)
+        let snapshot = LaunchesSnapshotBuilder.make(state: state, filters: [])
         Self.logger.debug("Applying snapshot: \(snapshot.numberOfItems, privacy: .public) items")
         dataSource?.apply(snapshot, animatingDifferences: animating)
     }
@@ -243,6 +256,52 @@ final class LaunchViewController: UIViewController, UICollectionViewDelegate {
               let section = dataSource?.snapshot().sectionIdentifiers[indexPath.section],
               section == .launches else { return }
         loadNextPageIfNeeded(for: indexPath)
+    }
+
+    private func applyCurrentQuery() {
+        launchListViewModel.applyQuery(query) { [weak self] state in
+            guard let self else { return }
+            self.currentState = state
+            self.handleStateUpdate(state)
+        }
+    }
+
+    private func setStatus(_ status: LaunchStatusFilter) {
+        query.statusFilter = status
+        configureDropdownMenus()
+        applyCurrentQuery()
+    }
+
+    private func setYear(_ year: Int?) {
+        query.year = year
+        configureDropdownMenus()
+        applyCurrentQuery()
+    }
+
+    @objc private func toggleSortOrder() {
+        query.sortOrder = query.sortOrder == .newestFirst ? .oldestFirst : .newestFirst
+        updateSortButtonTitle()
+        applyCurrentQuery()
+    }
+
+    private func updateSortButtonTitle() {
+        launchView.sortButton.setTitle(query.sortOrder == .newestFirst ? "↓" : "↑", for: .normal)
+    }
+
+    private func statusTitle(for status: LaunchStatusFilter) -> String {
+        switch status {
+        case .all: return L10n.launchesFilterAll
+        case .successful: return L10n.launchesFilterSuccessful
+        case .failed: return L10n.launchesFilterFailed
+        case .upcoming: return L10n.launchesFilterUpcoming
+        }
+    }
+
+    private func yearTitle() -> String {
+        if let year = query.year {
+            return String(year)
+        }
+        return L10n.launchesYearDropdown
     }
 }
 

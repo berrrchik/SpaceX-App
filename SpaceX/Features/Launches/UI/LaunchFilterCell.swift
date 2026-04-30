@@ -23,6 +23,7 @@ final class LaunchFilterCell: UICollectionViewCell {
         isAccessibilityElement = true
         accessibilityLabel = item.title
         accessibilityTraits = item.isSelected ? [.button, .selected] : [.button]
+        accessibilityIdentifier = "filterChip_\(item.id)"
     }
 
     private func setupView() {
