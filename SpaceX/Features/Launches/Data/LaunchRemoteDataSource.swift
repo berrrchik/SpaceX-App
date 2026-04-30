@@ -53,7 +53,22 @@ private struct LaunchesQueryEndpoint: APIEndpoint {
                 limit: limit,
                 page: page,
                 sort: ["date_utc": "desc"],
-                select: ["name", "date_utc", "success", "rocket"]
+                select: [
+                    "id",
+                    "name",
+                    "date_utc",
+                    "success",
+                    "rocket",
+                    "upcoming",
+                    "details",
+                    "launchpad",
+                    "links",
+                    "cores",
+                    "payloads",
+                    "crew",
+                    "ships",
+                    "capsules"
+                ]
             )
         )
         self.body = try? JSONEncoder().encode(request)
