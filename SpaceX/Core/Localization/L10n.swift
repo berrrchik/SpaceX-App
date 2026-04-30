@@ -27,6 +27,9 @@ enum L10n {
 
     static let launchesNoData = localized("launches.noData")
     static let launchesNetworkError = localized("launches.networkError")
+    static let launchesNoMatches = localized("launches.noMatches")
+    static let launchesStaleBanner = localized("launches.staleBanner")
+    static let launchesCachedBadge = localized("launches.cachedBadge")
 
     private static func localized(_ key: String) -> String {
         NSLocalizedString(key, comment: "")

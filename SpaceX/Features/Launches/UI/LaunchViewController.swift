@@ -1,5 +1,4 @@
 import UIKit
-
 class LaunchViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     private static let logger = AppLogger.make("LaunchViewController")
     
@@ -8,9 +7,11 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     private let launchListViewModel: LaunchListViewModel
     private let launchView = LaunchView()
     private var cellViewModels: [LaunchCellViewModel] = []
-    private var currentState: LaunchListState = .initialLoading
+    private var currentState: LoadableState<[LaunchCellViewModel]> = .idle
     private var hasRequestedInitialLoad = false
     private let paginationIndicator = UIActivityIndicatorView(style: .medium)
+    private let cachedBadgeLabel = UILabel()
+    private lazy var cachedBadgeItem = UIBarButtonItem(customView: cachedBadgeLabel)
     weak var coordinator: AppCoordinating?
     
     init(rocketId: String, rocketName: String, launchListViewModel: LaunchListViewModel) {
@@ -29,6 +30,7 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
         Self.logger.debug("viewDidLoad for rocket id=\(self.rocketId, privacy: .public) name=\(self.rocketName, privacy: .public)")
         setupViewController()
         setupTableView()
+        setupCachedBadge()
         setupBackButtonHandler()
     }
     
@@ -60,6 +62,19 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
         launchView.tableView.delegate = self
         paginationIndicator.hidesWhenStopped = true
     }
+
+    private func setupCachedBadge() {
+        cachedBadgeLabel.text = L10n.launchesCachedBadge
+        cachedBadgeLabel.font = AppFonts.bold14
+        cachedBadgeLabel.textColor = AppColors.white
+        cachedBadgeLabel.backgroundColor = AppColors.darkGray.withAlphaComponent(0.8)
+        cachedBadgeLabel.layer.cornerRadius = 8
+        cachedBadgeLabel.layer.masksToBounds = true
+        cachedBadgeLabel.textAlignment = .center
+        cachedBadgeLabel.frame = CGRect(x: 0, y: 0, width: 64, height: 24)
+        cachedBadgeLabel.accessibilityLabel = L10n.launchesStaleBanner
+        navigationItem.rightBarButtonItem = nil
+    }
     
     private func setupBackButtonHandler() {
         launchView.onBackButtonTap = { [weak self] in
@@ -90,37 +105,56 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
         }
     }
     
-    private func handleStateUpdate(_ state: LaunchListState) {
+    private func handleStateUpdate(_ state: LoadableState<[LaunchCellViewModel]>) {
         switch state {
-        case .initialLoading:
-            break
+        case .idle:
+            launchView.hideLoadingOverlay()
+            setCachedBadgeVisible(false)
+        case .loading:
+            let isInitialLoading = cellViewModels.isEmpty
+            if isInitialLoading {
+                launchView.showLoadingOverlay()
+            } else {
+                launchView.hideLoadingOverlay()
+            }
+            setCachedBadgeVisible(false)
             
-        case .content(let viewModels):
+        case .loaded(let viewModels, let isStale):
             Self.logger.debug("Launch content state. rocket id=\(self.rocketId, privacy: .public) count=\(viewModels.count, privacy: .public)")
             launchView.hideLoadingOverlay()
             cellViewModels = viewModels
+            setCachedBadgeVisible(isStale)
             updatePaginationFooter()
             launchView.tableView.reloadData()
-            
-        case .paginating(let viewModels):
-            cellViewModels = viewModels
-            updatePaginationFooter()
-            
-        case .empty:
+
+        case .empty(let message):
             Self.logger.debug("Launch empty state for rocket id=\(self.rocketId, privacy: .public)")
             launchView.hideLoadingOverlay()
             cellViewModels = []
+            setCachedBadgeVisible(false)
+            currentState = .empty(message: message)
             updatePaginationFooter()
             launchView.tableView.reloadData()
-            
-        case .error(let message):
+
+        case .failed(let message, let cachedValue):
             Self.logger.error("Launch error state for rocket id=\(self.rocketId, privacy: .public): \(message, privacy: .public)")
             launchView.hideLoadingOverlay()
-            cellViewModels = []
+            if let cachedValue, !cachedValue.isEmpty {
+                cellViewModels = cachedValue
+                setCachedBadgeVisible(true)
+            } else {
+                cellViewModels = []
+                setCachedBadgeVisible(false)
+                currentState = .empty(message: message)
+            }
             updatePaginationFooter()
             launchView.tableView.reloadData()
             showErrorAlert(message)
         }
+    }
+
+    private func setCachedBadgeVisible(_ isVisible: Bool) {
+        navigationItem.rightBarButtonItem = isVisible ? cachedBadgeItem : nil
     }
     
     private func showErrorAlert(_ message: String) {
@@ -135,7 +169,7 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
 
     private func updatePaginationFooter() {
         let isPaginating: Bool
-        if case .paginating = currentState {
+        if case .loading = currentState, !cellViewModels.isEmpty {
             isPaginating = true
         } else {
             isPaginating = false
@@ -155,8 +189,6 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
         switch currentState {
         case .empty:
             return 1
-        case .error:
-            return 1
         default:
             return cellViewModels.count
         }
@@ -164,9 +196,7 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         switch currentState {
-        case .empty:
-            return createErrorCell(with: L10n.launchesNoData)
-        case .error(let message):
+        case .empty(let message):
             return createErrorCell(with: message)
         default:
             return createLaunchCell(for: indexPath)
@@ -190,7 +220,7 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         switch currentState {
-        case .empty, .error:
+        case .empty:
             return Constants.errorRowHeight
         default:
             return tableView.rowHeight
@@ -198,7 +228,7 @@ class LaunchViewController: UIViewController, UITableViewDataSource, UITableView
     }
 
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        guard case .content = currentState else { return }
+        guard case .loaded = currentState else { return }
         updatePaginationFooter()
         loadNextPageIfNeeded(for: indexPath)
     }

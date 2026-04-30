@@ -20,3 +20,6 @@
 "rocket.loadError" = "Failed to load rocket data.";
 "launches.noData" = "No launch data for this rocket";
 "launches.networkError" = "Oops! Something went wrong, check your connection";
+"launches.noMatches" = "No launches match your search";
+"launches.staleBanner" = "Showing cached data. Pull to refresh.";
+"launches.cachedBadge" = "Cached";
