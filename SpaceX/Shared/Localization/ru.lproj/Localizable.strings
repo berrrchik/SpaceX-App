@@ -31,3 +31,17 @@
 "launches.sort.newest" = "Сначала новые";
 "launches.sort.oldest" = "Сначала старые";
 "launches.yearDropdown" = "Год";
+"launchDetail.title" = "Запуск";
+"launchDetail.loadError" = "Не удалось загрузить детали запуска.";
+"launchDetail.timeline" = "Время";
+"launchDetail.description" = "Описание";
+"launchDetail.rocket" = "Ракета";
+"launchDetail.pad" = "Площадка";
+"launchDetail.payload" = "Полезная нагрузка";
+"launchDetail.crew" = "Экипаж";
+"launchDetail.ships" = "Корабли";
+"launchDetail.capsules" = "Капсулы";
+"launchDetail.links" = "Внешние ссылки";
+"launchDetail.openWikipedia" = "Открыть Wikipedia";
+"launchDetail.openArticle" = "Открыть статью";
+"launchDetail.openWebcast" = "Открыть трансляцию";

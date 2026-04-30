@@ -28,7 +28,7 @@ final class LaunchView: UIView {
         setupCollectionView()
         setupLoadingOverlay()
     }
-
+    
     private func setupControls() {
         addSubview(controlsContainer)
         controlsContainer.addSubview(controlsStack)

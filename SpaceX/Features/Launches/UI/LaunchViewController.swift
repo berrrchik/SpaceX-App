@@ -258,6 +258,12 @@ final class LaunchViewController: UIViewController, UICollectionViewDelegate {
         loadNextPageIfNeeded(for: indexPath)
     }
 
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard let item = dataSource?.itemIdentifier(for: indexPath) else { return }
+        guard case .launch(let viewModel) = item else { return }
+        coordinator?.showLaunchDetail(for: viewModel.id)
+    }
+
     private func applyCurrentQuery() {
         launchListViewModel.applyQuery(query) { [weak self] state in
             guard let self else { return }

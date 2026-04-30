@@ -31,3 +31,17 @@
 "launches.sort.newest" = "Newest";
 "launches.sort.oldest" = "Oldest";
 "launches.yearDropdown" = "Year";
+"launchDetail.title" = "Launch";
+"launchDetail.loadError" = "Failed to load launch details.";
+"launchDetail.timeline" = "Timeline";
+"launchDetail.description" = "Description";
+"launchDetail.rocket" = "Rocket";
+"launchDetail.pad" = "Pad";
+"launchDetail.payload" = "Payload";
+"launchDetail.crew" = "Crew";
+"launchDetail.ships" = "Ships";
+"launchDetail.capsules" = "Capsules";
+"launchDetail.links" = "External Links";
+"launchDetail.openWikipedia" = "Open Wikipedia";
+"launchDetail.openArticle" = "Open Article";
+"launchDetail.openWebcast" = "Open Webcast";

@@ -7,6 +7,7 @@ protocol Coordinator: AnyObject {
 protocol AppCoordinating: AnyObject {
     func showSettings(from viewController: UIViewController)
     func showLaunches(for rocket: Rocket)
+    func showLaunchDetail(for launchId: String)
     func popViewController()
     func dismissViewController(from viewController: UIViewController)
     func showLoading(from presenter: UIViewController)
@@ -87,6 +88,13 @@ class AppCoordinator: Coordinator {
         navigationController.topViewController?.navigationItem.backBarButtonItem = backButton
         
         navigationController.pushViewController(launchViewController, animated: true)
+    }
+
+    func showLaunchDetail(for launchId: String) {
+        let viewModel = appContainer.makeLaunchDetailViewModel(launchId: launchId)
+        let viewController = LaunchDetailViewController(viewModel: viewModel)
+        viewController.coordinator = self
+        navigationController.pushViewController(viewController, animated: true)
     }
 
     func showLoading(from presenter: UIViewController) {
