@@ -18,9 +18,15 @@ struct LaunchDTO: Decodable {
 }
 
 struct LaunchLinksDTO: Decodable {
+    let patch: LaunchPatchDTO?
     let wikipedia: String?
     let article: String?
     let webcast: String?
+}
+
+struct LaunchPatchDTO: Decodable {
+    let small: String?
+    let large: String?
 }
 
 struct CoreDTO: Decodable {

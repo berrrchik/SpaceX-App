@@ -30,7 +30,7 @@ final class RocketView: UIView {
     }
 
     func configure(with displayModel: RocketDisplayModel) {
-        if let imageURL = displayModel.imageURL {
+        if let imageURL = sanitizedURL(displayModel.imageURL) {
             heroImageView.kf.setImage(
                 with: imageURL,
                 placeholder: UIImage(named: "SomethingWentWrong"),
@@ -69,6 +69,19 @@ final class RocketView: UIView {
             fuel: displayModel.secondStageFuelTons,
             burnTime: displayModel.secondStageBurnTime
         )
+    }
+
+    private func sanitizedURL(_ url: URL?) -> URL? {
+        guard let url else { return nil }
+        if url.scheme?.lowercased() == "https" {
+            return url
+        }
+        if url.scheme?.lowercased() == "http",
+           var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+            components.scheme = "https"
+            return components.url
+        }
+        return nil
     }
 
     func adjustScrollViewInsets(safeAreaInsets: UIEdgeInsets) {

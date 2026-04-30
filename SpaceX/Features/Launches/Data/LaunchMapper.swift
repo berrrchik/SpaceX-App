@@ -42,9 +42,11 @@ struct LaunchMapper {
 
     private func mapLinks(_ dto: LaunchLinksDTO) -> LaunchLinks {
         LaunchLinks(
-            wikipedia: dto.wikipedia.flatMap(URL.init(string:)),
-            article: dto.article.flatMap(URL.init(string:)),
-            webcast: dto.webcast.flatMap(URL.init(string:))
+            patchSmall: sanitizedHTTPSURL(from: dto.patch?.small),
+            patchLarge: sanitizedHTTPSURL(from: dto.patch?.large),
+            wikipedia: sanitizedHTTPSURL(from: dto.wikipedia),
+            article: sanitizedHTTPSURL(from: dto.article),
+            webcast: sanitizedHTTPSURL(from: dto.webcast)
         )
     }
 
@@ -66,5 +68,18 @@ struct LaunchMapper {
             guard let crewId = dto.crew else { return nil }
             return CrewMember(crewId: crewId, role: dto.role)
         }
+    }
+
+    private func sanitizedHTTPSURL(from raw: String?) -> URL? {
+        guard let raw, let url = URL(string: raw) else { return nil }
+        if url.scheme?.lowercased() == "https" {
+            return url
+        }
+        if url.scheme?.lowercased() == "http",
+           var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+            components.scheme = "https"
+            return components.url
+        }
+        return nil
     }
 }
