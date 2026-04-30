@@ -23,3 +23,11 @@
 "launches.noMatches" = "No launches match your search";
 "launches.staleBanner" = "Showing cached data. Pull to refresh.";
 "launches.cachedBadge" = "Cached";
+"launches.searchPlaceholder" = "Search launches";
+"launches.filter.all" = "All";
+"launches.filter.successful" = "Successful";
+"launches.filter.failed" = "Failed";
+"launches.filter.upcoming" = "Upcoming";
+"launches.sort.newest" = "Newest";
+"launches.sort.oldest" = "Oldest";
+"launches.yearDropdown" = "Year";

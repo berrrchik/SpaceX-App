@@ -23,3 +23,11 @@
 "launches.noMatches" = "По вашему запросу запусков не найдено";
 "launches.staleBanner" = "Показаны сохраненные данные. Обновите для актуальной версии.";
 "launches.cachedBadge" = "Кэш";
+"launches.searchPlaceholder" = "Поиск запусков";
+"launches.filter.all" = "Все";
+"launches.filter.successful" = "Успешные";
+"launches.filter.failed" = "Неуспешные";
+"launches.filter.upcoming" = "Предстоящие";
+"launches.sort.newest" = "Сначала новые";
+"launches.sort.oldest" = "Сначала старые";
+"launches.yearDropdown" = "Год";

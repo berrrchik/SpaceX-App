@@ -30,6 +30,14 @@ enum L10n {
     static let launchesNoMatches = localized("launches.noMatches")
     static let launchesStaleBanner = localized("launches.staleBanner")
     static let launchesCachedBadge = localized("launches.cachedBadge")
+    static let launchesSearchPlaceholder = localized("launches.searchPlaceholder")
+    static let launchesFilterAll = localized("launches.filter.all")
+    static let launchesFilterSuccessful = localized("launches.filter.successful")
+    static let launchesFilterFailed = localized("launches.filter.failed")
+    static let launchesFilterUpcoming = localized("launches.filter.upcoming")
+    static let launchesSortNewest = localized("launches.sort.newest")
+    static let launchesSortOldest = localized("launches.sort.oldest")
+    static let launchesYearDropdown = localized("launches.yearDropdown")
 
     private static func localized(_ key: String) -> String {
         NSLocalizedString(key, comment: "")
