@@ -8,8 +8,8 @@ final class LaunchViewModelTests: XCTestCase {
                 1: .success(
                     LaunchPageResult(
                         launches: [
-                            Launch(name: "Second", dateUtc: "2023-05-01T00:00:00.000Z", formattedDate: "01.05.2023", success: true, rocketId: "rocket-1"),
-                            Launch(name: "First", dateUtc: "2024-01-01T00:00:00.000Z", formattedDate: "01.01.2024", success: false, rocketId: "rocket-1"),
+                            Launch(id: "second", name: "Second", dateUtc: "2023-05-01T00:00:00.000Z", formattedDate: "01.05.2023", success: true, rocketId: "rocket-1"),
+                            Launch(id: "first", name: "First", dateUtc: "2024-01-01T00:00:00.000Z", formattedDate: "01.01.2024", success: false, rocketId: "rocket-1"),
                         ],
                         hasNextPage: true,
                         nextPage: 2
@@ -217,6 +217,7 @@ final class LaunchViewModelTests: XCTestCase {
         (0..<count).map { index in
             let day = String(format: "%02d", index + 1 + dayOffset)
             return Launch(
+                id: "\(prefix.lowercased())-\(index)",
                 name: "\(prefix)-\(index)",
                 dateUtc: "2024-01-\(day)T00:00:00.000Z",
                 formattedDate: "\(day).01.2024",
