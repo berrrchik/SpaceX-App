@@ -37,17 +37,15 @@ final class LaunchDetailViewController: UIViewController {
         case .idle:
             contentView.hideLoadingOverlay()
         case .loading:
+            contentView.hideUnavailableState()
             contentView.showLoadingOverlay()
         case .loaded(let detail, _):
             contentView.hideLoadingOverlay()
             contentView.render(detail: detail)
         case .failed(let message, _):
-            contentView.hideLoadingOverlay()
-            let alert = UIAlertController(title: L10n.alertErrorTitle, message: message, preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: L10n.alertOk, style: .default))
-            present(alert, animated: true)
+            contentView.showUnavailableState(message: message)
         case .empty:
-            contentView.hideLoadingOverlay()
+            contentView.showUnavailableState(message: L10n.launchDetailLoadError)
         }
     }
 }

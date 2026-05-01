@@ -26,6 +26,7 @@ enum L10n {
     static let rocketLoadErrorMessage = localized("rocket.loadError")
 
     static let launchesNoData = localized("launches.noData")
+    static let launchesOfflineNoData = localized("launches.offlineNoData")
     static let launchesNetworkError = localized("launches.networkError")
     static let launchesNoMatches = localized("launches.noMatches")
     static let launchesStaleBanner = localized("launches.staleBanner")
@@ -40,6 +41,7 @@ enum L10n {
     static let launchesYearDropdown = localized("launches.yearDropdown")
     static let launchDetailTitle = localized("launchDetail.title")
     static let launchDetailLoadError = localized("launchDetail.loadError")
+    static let launchDetailOfflineUnavailable = localized("launchDetail.offlineUnavailable")
     static let launchDetailTimelineTitle = localized("launchDetail.timeline")
     static let launchDetailDescriptionTitle = localized("launchDetail.description")
     static let launchDetailRocketTitle = localized("launchDetail.rocket")

@@ -1,25 +1,8 @@
 import XCTest
+import Combine
 @testable import SpaceX
 
 final class LaunchDetailRepositoryTests: XCTestCase {
-    private static let suiteName = "com.test.launchDetailRepository"
-
-    private var defaults: UserDefaults!
-    private var cacheStore: UserDefaultsLaunchCacheStore!
-
-    override func setUp() {
-        super.setUp()
-        defaults = UserDefaults(suiteName: Self.suiteName)
-        cacheStore = UserDefaultsLaunchCacheStore(defaults: defaults)
-    }
-
-    override func tearDown() {
-        defaults.removePersistentDomain(forName: Self.suiteName)
-        defaults = nil
-        cacheStore = nil
-        super.tearDown()
-    }
-
     func test_fetch_returnsCombinedLaunchAndLaunchpad_fromNetwork() async throws {
         let launchDTO = LaunchDTO(
             id: "l1",
@@ -46,7 +29,7 @@ final class LaunchDetailRepositoryTests: XCTestCase {
             crewDataSource: MockCrewDS(crewMember: nil),
             capsuleDataSource: MockCapsuleDS(capsule: Capsule(id: "c1", serial: "C101", status: "active", type: "Dragon 2.0")),
             shipDataSource: MockShipDS(ship: Ship(id: "s1", name: "Elsbeth III", model: nil, type: "Tug", active: false, homePort: "Port Canaveral", imageURL: nil)),
-            cacheStore: cacheStore
+            networkMonitor: MockNetworkMonitor(isConnected: true)
         )
 
         let detail = try await sut.fetchDetail(for: "l1")
@@ -56,16 +39,7 @@ final class LaunchDetailRepositoryTests: XCTestCase {
         XCTAssertFalse(detail.isStale)
     }
 
-    func test_fetch_networkFailure_withCache_returnsCachedLaunch() async throws {
-        let cached = Launch(
-            id: "l1",
-            name: "Cached",
-            dateUtc: "2024-01-01T00:00:00.000Z",
-            formattedDate: "01.01.2024",
-            success: true,
-            rocketId: "r1"
-        )
-        cacheStore.save([cached], for: "r1")
+    func test_fetch_networkFailure_whenOnline_throws() async {
         let sut = LaunchDetailRepository(
             launchDetailDataSource: MockDetailDS(error: MockRepoError.failed),
             launchpadDataSource: MockLaunchpadDS(launchpad: nil),
@@ -74,17 +48,18 @@ final class LaunchDetailRepositoryTests: XCTestCase {
             crewDataSource: MockCrewDS(crewMember: nil),
             capsuleDataSource: MockCapsuleDS(capsule: nil),
             shipDataSource: MockShipDS(ship: nil),
-            cacheStore: cacheStore
+            networkMonitor: MockNetworkMonitor(isConnected: true)
         )
 
-        let detail = try await sut.fetchDetail(for: "l1")
-
-        XCTAssertEqual(detail.launch.name, "Cached")
-        XCTAssertTrue(detail.isStale)
-        XCTAssertNil(detail.launchpad)
+        do {
+            _ = try await sut.fetchDetail(for: "l1")
+            XCTFail("Expected throw")
+        } catch {
+            XCTAssertFalse(error is LaunchDetailError)
+        }
     }
 
-    func test_fetch_networkFailure_noCache_throws() async {
+    func test_fetch_offline_throwsOfflineUnavailable() async {
         let sut = LaunchDetailRepository(
             launchDetailDataSource: MockDetailDS(error: MockRepoError.failed),
             launchpadDataSource: MockLaunchpadDS(launchpad: nil),
@@ -93,7 +68,7 @@ final class LaunchDetailRepositoryTests: XCTestCase {
             crewDataSource: MockCrewDS(crewMember: nil),
             capsuleDataSource: MockCapsuleDS(capsule: nil),
             shipDataSource: MockShipDS(ship: nil),
-            cacheStore: cacheStore
+            networkMonitor: MockNetworkMonitor(isConnected: false)
         )
 
         do {
@@ -102,6 +77,30 @@ final class LaunchDetailRepositoryTests: XCTestCase {
         } catch {
             XCTAssertTrue(error is LaunchDetailError)
         }
+    }
+}
+
+private final class MockNetworkMonitor: NetworkMonitorProtocol {
+    private let connected: Bool
+
+    init(isConnected: Bool) {
+        self.connected = isConnected
+    }
+
+    var connectivityPublisher: AnyPublisher<ConnectivityStatus, Never> {
+        Just(connected ? .connected : .disconnected).eraseToAnyPublisher()
+    }
+
+    var connectionRestoredPublisher: AnyPublisher<Void, Never> {
+        Empty().eraseToAnyPublisher()
+    }
+
+    var connectivityStatus: ConnectivityStatus {
+        connected ? .connected : .disconnected
+    }
+
+    func isConnected() -> Bool {
+        connected
     }
 }
 

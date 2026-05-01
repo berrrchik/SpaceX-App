@@ -46,7 +46,7 @@ final class AppContainer {
         crewDataSource: crewRemoteDataSource,
         capsuleDataSource: capsuleRemoteDataSource,
         shipDataSource: shipRemoteDataSource,
-        cacheStore: launchCacheStore
+        networkMonitor: networkMonitor
     )
     lazy var dateFormatter: DateFormatting = DefaultDateFormatter()
     lazy var rocketFormatter: RocketFormatting = DefaultRocketFormatter()

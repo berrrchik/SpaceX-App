@@ -19,6 +19,7 @@
 "rocket.showLaunches" = "Посмотреть запуски";
 "rocket.loadError" = "Не удалось загрузить данные о ракетах.";
 "launches.noData" = "Нет данных о запуске этой ракеты";
+"launches.offlineNoData" = "Запуски недоступны без интернета, так как данные для этой ракеты не были загружены ранее.";
 "launches.networkError" = "ОКАК! Что-то пошло не так, проверьте соединение";
 "launches.noMatches" = "По вашему запросу запусков не найдено";
 "launches.staleBanner" = "Показаны сохраненные данные. Обновите для актуальной версии.";
@@ -33,6 +34,7 @@
 "launches.yearDropdown" = "Год";
 "launchDetail.title" = "Запуск";
 "launchDetail.loadError" = "Не удалось загрузить детали запуска.";
+"launchDetail.offlineUnavailable" = "Детальный вид запуска недоступен без интернета.";
 "launchDetail.timeline" = "Время";
 "launchDetail.description" = "Описание";
 "launchDetail.rocket" = "Ракета";

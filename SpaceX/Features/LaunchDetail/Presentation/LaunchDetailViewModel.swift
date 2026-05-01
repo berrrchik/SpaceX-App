@@ -31,7 +31,13 @@ final class LaunchDetailViewModel {
             } catch {
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
-                    self.state = .failed(message: L10n.launchDetailLoadError, cachedValue: nil)
+                    let message: String
+                    if case LaunchDetailError.offlineUnavailable = error {
+                        message = L10n.launchDetailOfflineUnavailable
+                    } else {
+                        message = L10n.launchDetailLoadError
+                    }
+                    self.state = .failed(message: message, cachedValue: nil)
                     self.onStateChange?(self.state)
                     Self.logger.error("Detail state -> failed: \(error.localizedDescription, privacy: .public)")
                 }

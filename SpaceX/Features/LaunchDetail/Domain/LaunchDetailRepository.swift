@@ -7,6 +7,7 @@ protocol LaunchDetailRepositoryProtocol {
 enum LaunchDetailError: Error {
     case invalidData
     case launchNotFound(id: String)
+    case offlineUnavailable
 }
 
 final class LaunchDetailRepository: LaunchDetailRepositoryProtocol {
@@ -17,7 +18,7 @@ final class LaunchDetailRepository: LaunchDetailRepositoryProtocol {
     private let crewDataSource: CrewRemoteDataSourceProtocol
     private let capsuleDataSource: CapsuleRemoteDataSourceProtocol
     private let shipDataSource: ShipRemoteDataSourceProtocol
-    private let cacheStore: LaunchCacheStoreProtocol
+    private let networkMonitor: NetworkMonitorProtocol
     private let mapper = LaunchMapper()
     private let logger = AppLogger.make("LaunchDetailRepository")
 
@@ -29,7 +30,7 @@ final class LaunchDetailRepository: LaunchDetailRepositoryProtocol {
         crewDataSource: CrewRemoteDataSourceProtocol,
         capsuleDataSource: CapsuleRemoteDataSourceProtocol,
         shipDataSource: ShipRemoteDataSourceProtocol,
-        cacheStore: LaunchCacheStoreProtocol
+        networkMonitor: NetworkMonitorProtocol
     ) {
         self.launchDetailDataSource = launchDetailDataSource
         self.launchpadDataSource = launchpadDataSource
@@ -38,11 +39,15 @@ final class LaunchDetailRepository: LaunchDetailRepositoryProtocol {
         self.crewDataSource = crewDataSource
         self.capsuleDataSource = capsuleDataSource
         self.shipDataSource = shipDataSource
-        self.cacheStore = cacheStore
+        self.networkMonitor = networkMonitor
     }
 
     func fetchDetail(for launchId: String) async throws -> LaunchDetail {
         logger.debug("Loading detail for launch \(launchId, privacy: .public)")
+        if !networkMonitor.isConnected() {
+            logger.warning("No network for launch detail \(launchId, privacy: .public). Showing offline unavailable state.")
+            throw LaunchDetailError.offlineUnavailable
+        }
         do {
             let launchDTO = try await launchDetailDataSource.fetchLaunch(for: launchId)
             guard let launch = mapper.map(launchDTO) else {
@@ -158,29 +163,13 @@ final class LaunchDetailRepository: LaunchDetailRepositoryProtocol {
                 isStale: false
             )
         } catch {
-            logger.warning(
-                "Network fetch failed for launch \(launchId, privacy: .public): \(error.localizedDescription, privacy: .public). Trying cache."
-            )
-            let cachedLaunch = cacheStore
-                .allKnownRocketIds()
-                .compactMap { cacheStore.load(for: $0) }
-                .flatMap { $0 }
-                .first { $0.id == launchId }
-
-            guard let cachedLaunch else {
-                throw LaunchDetailError.launchNotFound(id: launchId)
+            if !networkMonitor.isConnected() {
+                throw LaunchDetailError.offlineUnavailable
             }
-
-            return LaunchDetail(
-                launch: cachedLaunch,
-                rocket: nil,
-                launchpad: nil,
-                payloads: cachedLaunch.payloadIds.map { Payload(id: $0, name: nil, type: nil, massKg: nil, orbit: nil) },
-                crewMembers: cachedLaunch.crew,
-                ships: cachedLaunch.shipIds.map { Ship(id: $0, name: nil, model: nil, type: nil, active: nil, homePort: nil, imageURL: nil) },
-                capsules: cachedLaunch.capsuleIds.map { Capsule(id: $0, serial: nil, status: nil, type: nil) },
-                isStale: true
+            logger.warning(
+                "Network fetch failed for launch \(launchId, privacy: .public): \(error.localizedDescription, privacy: .public)"
             )
+            throw error
         }
     }
 }

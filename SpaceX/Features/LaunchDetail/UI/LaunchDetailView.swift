@@ -6,6 +6,9 @@ final class LaunchDetailView: UIView {
     let scrollView = UIScrollView()
     private let contentStack = UIStackView()
     private let loadingOverlayView = LoadingView()
+    private let offlineContainer = UIView()
+    private let offlineImageView = UIImageView()
+    private let offlineMessageLabel = UILabel()
 
     private let heroImageView = UIImageView()
     private let missionTitleLabel = UILabel()
@@ -37,6 +40,7 @@ final class LaunchDetailView: UIView {
     }
 
     func render(detail: LaunchDetail) {
+        hideUnavailableState()
         missionTitleLabel.text = detail.launch.name
         timelineValueLabel.text = detail.launch.formattedDate
         descriptionValueLabel.text = detail.launch.details
@@ -154,6 +158,31 @@ final class LaunchDetailView: UIView {
         loadingOverlayView.snp.makeConstraints { make in
             make.edges.equalTo(safeAreaLayoutGuide)
         }
+
+        addSubview(offlineContainer)
+        offlineContainer.isHidden = true
+        offlineContainer.backgroundColor = AppColors.black
+        offlineContainer.addSubview(offlineImageView)
+        offlineContainer.addSubview(offlineMessageLabel)
+        offlineContainer.snp.makeConstraints { make in
+            make.edges.equalTo(safeAreaLayoutGuide)
+        }
+
+        offlineImageView.contentMode = .scaleAspectFit
+        offlineImageView.snp.makeConstraints { make in
+            make.centerX.equalToSuperview()
+            make.centerY.equalToSuperview().offset(-40)
+            make.width.height.equalTo(140)
+        }
+
+        offlineMessageLabel.font = AppFonts.regular16
+        offlineMessageLabel.textColor = AppColors.white
+        offlineMessageLabel.textAlignment = .center
+        offlineMessageLabel.numberOfLines = 0
+        offlineMessageLabel.snp.makeConstraints { make in
+            make.top.equalTo(offlineImageView.snp.bottom).offset(16)
+            make.leading.trailing.equalToSuperview().inset(24)
+        }
     }
 
     func showLoadingOverlay() {
@@ -164,6 +193,19 @@ final class LaunchDetailView: UIView {
     func hideLoadingOverlay() {
         loadingOverlayView.isHidden = true
         loadingOverlayView.stopRotationAnimation()
+    }
+
+    func showUnavailableState(message: String) {
+        hideLoadingOverlay()
+        scrollView.isHidden = true
+        offlineContainer.isHidden = false
+        offlineImageView.image = UIImage(named: "unknown")
+        offlineMessageLabel.text = message
+    }
+
+    func hideUnavailableState() {
+        offlineContainer.isHidden = true
+        scrollView.isHidden = false
     }
 
     private func makeCard() -> UIView {
