@@ -155,13 +155,13 @@ final class LaunchView: UIView {
                 let item = NSCollectionLayoutItem(
                     layoutSize: NSCollectionLayoutSize(
                         widthDimension: .fractionalWidth(1.0),
-                        heightDimension: .absolute(100)
+                        heightDimension: .estimated(220)
                     )
                 )
                 let group = NSCollectionLayoutGroup.vertical(
                     layoutSize: NSCollectionLayoutSize(
                         widthDimension: .fractionalWidth(1.0),
-                        heightDimension: .absolute(100)
+                        heightDimension: .estimated(220)
                     ),
                     subitems: [item]
                 )

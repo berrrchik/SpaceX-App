@@ -24,13 +24,13 @@ enum LaunchesSnapshotBuilder {
         case .loaded(let items, _):
             snapshot.appendSections([.launches])
             snapshot.appendItems(items.map { .launch($0) }, toSection: .launches)
-        case .failed(_, let cachedValue):
+        case .failed(let message, let cachedValue):
             if let cachedValue, !cachedValue.isEmpty {
                 snapshot.appendSections([.launches])
                 snapshot.appendItems(cachedValue.map { .launch($0) }, toSection: .launches)
             } else {
                 snapshot.appendSections([.message])
-                snapshot.appendItems([.message(L10n.launchesNetworkError)], toSection: .message)
+                snapshot.appendItems([.message(message)], toSection: .message)
             }
         case .empty(let message):
             snapshot.appendSections([.message])

@@ -192,18 +192,7 @@ final class LaunchViewController: UIViewController, UICollectionViewDelegate {
             }
             configureDropdownMenus()
             applySnapshot(for: currentState, animating: true)
-            showErrorAlert(message)
         }
-    }
-    
-    private func showErrorAlert(_ message: String) {
-        let alert = UIAlertController(
-            title: L10n.alertErrorTitle,
-            message: message,
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: L10n.alertOk, style: .default))
-        present(alert, animated: true)
     }
 
     private func configureDataSource() {
@@ -214,7 +203,8 @@ final class LaunchViewController: UIViewController, UICollectionViewDelegate {
             cell.configure(with: item)
         }
         let messageCellRegistration = UICollectionView.CellRegistration<LaunchErrorCell, String> { cell, _, message in
-            cell.configure(message: message)
+            let showUnknownImage = message == L10n.launchesOfflineNoData
+            cell.configure(message: message, showUnknownImage: showUnknownImage)
         }
 
         dataSource = DataSource(collectionView: launchView.collectionView) { collectionView, indexPath, item in

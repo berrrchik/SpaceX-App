@@ -58,7 +58,9 @@ final class LaunchListViewModel {
                     self.cachedLaunches = cached
                     let filtered = self.filteredLaunches(for: self.currentQuery)
                     let cachedVMs = filtered.isEmpty ? nil : self.mapToViewModels(filtered)
-                    self.state = .failed(message: L10n.launchesNetworkError, cachedValue: cachedVMs)
+                    let isOfflineError = (error as? NetworkError)?.isOfflineLike == true
+                    let errorMessage = isOfflineError && cachedVMs == nil ? L10n.launchesOfflineNoData : L10n.launchesNetworkError
+                    self.state = .failed(message: errorMessage, cachedValue: cachedVMs)
                     completion(self.state)
                 }
             }
@@ -212,6 +214,18 @@ final class LaunchListViewModel {
                 date: launch.formattedDate,
                 statusImageName: statusImageName
             )
+        }
+    }
+}
+
+private extension NetworkError {
+    var isOfflineLike: Bool {
+        switch self {
+        case .transport(let error):
+            guard let urlError = error as? URLError else { return false }
+            return urlError.code == .notConnectedToInternet
+        default:
+            return false
         }
     }
 }
