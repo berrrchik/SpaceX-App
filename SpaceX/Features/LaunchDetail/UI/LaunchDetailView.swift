@@ -69,9 +69,16 @@ final class LaunchDetailView: UIView {
         capsulesValueLabel.superview?.isHidden = detail.capsules.isEmpty
 
         if let patchURL = sanitizedURL(detail.launch.links?.patchLarge ?? detail.launch.links?.patchSmall) {
-            heroImageView.kf.setImage(with: patchURL)
+            heroImageView.kf.setImage(
+                with: patchURL,
+                placeholder: UIImage(named: "unknown"),
+                options: [
+                    .transition(.fade(0.25)),
+                    .cacheOriginalImage
+                ]
+            )
         } else {
-            heroImageView.image = nil
+            heroImageView.image = UIImage(named: "unknown")
         }
 
         statusBadgeLabel.text = statusText(success: detail.launch.success, upcoming: detail.launch.upcoming)
