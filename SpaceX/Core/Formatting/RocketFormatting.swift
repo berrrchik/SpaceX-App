@@ -14,7 +14,7 @@ final class DefaultRocketFormatter: RocketFormatting {
         preferences: MeasurementPreference,
         dateFormatter: DateFormatting
     ) -> RocketDisplayModel {
-        let imageURL = rocket.flickrImages.randomElement().flatMap { URL(string: $0) }
+        let imageURL = rocket.flickrImages.first.flatMap { URL(string: $0) }
         
         let heightValue: String
         let heightUnit: String
