@@ -5,6 +5,9 @@
 ---
 
 ## Демо
+<p align="center">
+  <video src="https://github.com/user-attachments/assets/828f0626-ea5d-43dd-b3ce-0a463ea27b4d" />
+</p>
 
 ---
 
