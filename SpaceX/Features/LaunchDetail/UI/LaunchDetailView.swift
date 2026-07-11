@@ -283,6 +283,20 @@ final class LaunchDetailView: UIView {
 
     private func sanitizedURL(_ url: URL?) -> URL? {
         guard let url else { return nil }
+        if url.scheme?.lowercased() == "launch-image" {
+            let fileName = url.host ?? url.lastPathComponent
+            let subdirectories = [
+                "LaunchImages",
+                "Features/Launches/Data/LaunchImages",
+                "Launches/Data/LaunchImages"
+            ]
+            for subdirectory in subdirectories {
+                if let imageURL = Bundle.main.url(forResource: fileName, withExtension: nil, subdirectory: subdirectory) {
+                    return imageURL
+                }
+            }
+            return Bundle.main.url(forResource: fileName, withExtension: nil)
+        }
         if url.scheme?.lowercased() == "https" {
             return url
         }
@@ -297,16 +311,32 @@ final class LaunchDetailView: UIView {
     private func payloadDisplayText(_ payload: Payload) -> String {
         let namePart = payload.name?.trimmingCharacters(in: .whitespacesAndNewlines)
         let typePart = payload.type?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let orbitPart = payload.orbit?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let massPart = payload.massKg.map { formattedMass($0) }
+
+        let base: String
         switch (namePart?.isEmpty == false ? namePart : nil, typePart?.isEmpty == false ? typePart : nil) {
         case let (name?, type?):
-            return "\(name) (\(type))"
+            base = "\(name) (\(type))"
         case let (name?, nil):
-            return name
+            base = name
         case let (nil, type?):
-            return "\(payload.id) (\(type))"
+            base = "\(payload.id) (\(type))"
         default:
-            return payload.id
+            base = payload.id
         }
+
+        let metadata = [massPart, orbitPart?.isEmpty == false ? orbitPart : nil].compactMap { $0 }
+        guard !metadata.isEmpty else { return base }
+        return "\(base) — \(metadata.joined(separator: ", "))"
+    }
+
+    private func formattedMass(_ massKg: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = massKg.rounded() == massKg ? 0 : 1
+        let value = formatter.string(from: NSNumber(value: massKg)) ?? "\(massKg)"
+        return "\(value) kg"
     }
 
     private func crewDisplayText(_ crew: CrewMember) -> String {
