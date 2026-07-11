@@ -11,5 +11,5 @@ struct AppFonts {
     static let bold16 = UIFont(name: "LabGrotesque-Bold", size: 16)!
     static let bold18 = UIFont(name: "LabGrotesque-Bold", size: 18)!
     static let bold32 = UIFont(name: "LabGrotesque-Bold", size: 32)!
-    static let bold64 = UIFont(name: "LabGrotesque-Bold", size: 64)!
+    static let bold64 = UIFont(name: "LabGrotesque-Bold", size: 64) ?? UIFont.boldSystemFont(ofSize: 64)
 }
