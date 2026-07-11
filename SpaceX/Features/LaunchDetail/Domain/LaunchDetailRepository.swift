@@ -19,6 +19,7 @@ final class LaunchDetailRepository: LaunchDetailRepositoryProtocol {
     private let capsuleDataSource: CapsuleRemoteDataSourceProtocol
     private let shipDataSource: ShipRemoteDataSourceProtocol
     private let networkMonitor: NetworkMonitorProtocol
+    private let fallbackDataSource: LaunchFallbackDataSourceProtocol?
     private let mapper = LaunchMapper()
     private let logger = AppLogger.make("LaunchDetailRepository")
 
@@ -30,7 +31,8 @@ final class LaunchDetailRepository: LaunchDetailRepositoryProtocol {
         crewDataSource: CrewRemoteDataSourceProtocol,
         capsuleDataSource: CapsuleRemoteDataSourceProtocol,
         shipDataSource: ShipRemoteDataSourceProtocol,
-        networkMonitor: NetworkMonitorProtocol
+        networkMonitor: NetworkMonitorProtocol,
+        fallbackDataSource: LaunchFallbackDataSourceProtocol? = nil
     ) {
         self.launchDetailDataSource = launchDetailDataSource
         self.launchpadDataSource = launchpadDataSource
@@ -40,13 +42,14 @@ final class LaunchDetailRepository: LaunchDetailRepositoryProtocol {
         self.capsuleDataSource = capsuleDataSource
         self.shipDataSource = shipDataSource
         self.networkMonitor = networkMonitor
+        self.fallbackDataSource = fallbackDataSource
     }
 
     func fetchDetail(for launchId: String) async throws -> LaunchDetail {
         logger.debug("Loading detail for launch \(launchId, privacy: .public)")
         if !networkMonitor.isConnected() {
-            logger.warning("No network for launch detail \(launchId, privacy: .public). Showing offline unavailable state.")
-            throw LaunchDetailError.offlineUnavailable
+            logger.warning("No network for launch detail \(launchId, privacy: .public). Trying bundled fallback.")
+            return try loadFallbackDetail(for: launchId, originalError: LaunchDetailError.offlineUnavailable)
         }
         do {
             let launchDTO = try await launchDetailDataSource.fetchLaunch(for: launchId)
@@ -164,12 +167,104 @@ final class LaunchDetailRepository: LaunchDetailRepositoryProtocol {
             )
         } catch {
             if !networkMonitor.isConnected() {
-                throw LaunchDetailError.offlineUnavailable
+                return try loadFallbackDetail(for: launchId, originalError: LaunchDetailError.offlineUnavailable)
             }
             logger.warning(
                 "Network fetch failed for launch \(launchId, privacy: .public): \(error.localizedDescription, privacy: .public)"
             )
-            throw error
+            return try loadFallbackDetail(for: launchId, originalError: error)
         }
+    }
+
+    private func loadFallbackDetail(for launchId: String, originalError: Error) throws -> LaunchDetail {
+        guard let fallbackDataSource else { throw originalError }
+
+        do {
+            let launchDTO = try fallbackDataSource.fetchLaunch(for: launchId)
+            guard let launch = mapper.map(launchDTO) else {
+                throw LaunchDetailError.invalidData
+            }
+
+            logger.warning("Returning bundled fallback detail for launch \(launchId, privacy: .public)")
+            return LaunchDetail(
+                launch: launch,
+                rocket: fallbackDataSource.fetchRocketSummary(for: launch.rocketId),
+                launchpad: launch.launchpadId.flatMap { fallbackDataSource.fetchLaunchpad(for: $0) },
+                payloads: launch.payloadIds.map(makeFallbackPayload),
+                crewMembers: launch.crew,
+                ships: launch.shipIds.map(makeFallbackShip),
+                capsules: launch.capsuleIds.map { Capsule(id: $0, serial: nil, status: nil, type: nil) },
+                isStale: true
+            )
+        } catch {
+            logger.error("Bundled detail fallback failed: \(error.localizedDescription, privacy: .public)")
+            throw originalError
+        }
+    }
+
+    private func makeFallbackPayload(from value: String) -> Payload {
+        let parts = value.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
+        if parts.count >= 4 {
+            return Payload(
+                id: parts[0],
+                name: parts[0].nilIfEmpty,
+                type: parts[1].nilIfEmpty ?? fallbackPayloadType(for: parts[0]),
+                massKg: parseMassKg(parts[2]),
+                orbit: parts[3].nilIfEmpty
+            )
+        }
+        return Payload(
+            id: value,
+            name: value,
+            type: fallbackPayloadType(for: value),
+            massKg: nil,
+            orbit: nil
+        )
+    }
+
+    private func parseMassKg(_ value: String) -> Double? {
+        guard value.localizedCaseInsensitiveContains("kg") else { return nil }
+        let kilogramsPart = value.components(separatedBy: "kg").first ?? value
+        let allowedCharacters = CharacterSet(charactersIn: "0123456789.,")
+        let numericString = kilogramsPart.unicodeScalars
+            .filter { allowedCharacters.contains($0) }
+            .map(String.init)
+            .joined()
+            .replacingOccurrences(of: ",", with: "")
+        return Double(numericString)
+    }
+
+    private func fallbackPayloadType(for value: String) -> String {
+        let lowercased = value.lowercased()
+        if lowercased.contains("dragon") || lowercased.contains("crew") {
+            return "Spacecraft"
+        }
+        if lowercased.contains("roadster") {
+            return "Satellite"
+        }
+        return "Satellite"
+    }
+
+    private func makeFallbackShip(from value: String) -> Ship {
+        let parts = value.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count >= 3 else {
+            return Ship(id: value, name: value, model: nil, type: nil, active: nil, homePort: nil, imageURL: nil)
+        }
+        return Ship(
+            id: parts[0],
+            name: parts[0],
+            model: nil,
+            type: parts[1],
+            active: nil,
+            homePort: parts[2],
+            imageURL: nil
+        )
+    }
+}
+
+private extension String {
+    var nilIfEmpty: String? {
+        let value = trimmingCharacters(in: .whitespacesAndNewlines)
+        return value.isEmpty ? nil : value
     }
 }

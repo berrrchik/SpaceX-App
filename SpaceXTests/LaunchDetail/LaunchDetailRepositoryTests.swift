@@ -29,7 +29,8 @@ final class LaunchDetailRepositoryTests: XCTestCase {
             crewDataSource: MockCrewDS(crewMember: nil),
             capsuleDataSource: MockCapsuleDS(capsule: Capsule(id: "c1", serial: "C101", status: "active", type: "Dragon 2.0")),
             shipDataSource: MockShipDS(ship: Ship(id: "s1", name: "Elsbeth III", model: nil, type: "Tug", active: false, homePort: "Port Canaveral", imageURL: nil)),
-            networkMonitor: MockNetworkMonitor(isConnected: true)
+            networkMonitor: MockNetworkMonitor(isConnected: true),
+            fallbackDataSource: nil
         )
 
         let detail = try await sut.fetchDetail(for: "l1")
@@ -48,7 +49,8 @@ final class LaunchDetailRepositoryTests: XCTestCase {
             crewDataSource: MockCrewDS(crewMember: nil),
             capsuleDataSource: MockCapsuleDS(capsule: nil),
             shipDataSource: MockShipDS(ship: nil),
-            networkMonitor: MockNetworkMonitor(isConnected: true)
+            networkMonitor: MockNetworkMonitor(isConnected: true),
+            fallbackDataSource: nil
         )
 
         do {
@@ -59,7 +61,27 @@ final class LaunchDetailRepositoryTests: XCTestCase {
         }
     }
 
-    func test_fetch_offline_throwsOfflineUnavailable() async {
+    func test_fetch_offline_returnsBundledFallbackDetail() async throws {
+        let fallback = MockLaunchFallbackDS(
+            launch: LaunchDTO(
+                id: "l1",
+                name: "Fallback Launch",
+                dateUtc: "2024-01-01T00:00:00.000Z",
+                success: true,
+                rocket: "r1",
+                upcoming: false,
+                details: "Fallback details",
+                launchpad: "pad1",
+                links: nil,
+                cores: nil,
+                payloads: ["p1"],
+                crew: nil,
+                ships: nil,
+                capsules: nil
+            ),
+            rocket: RocketSummary(id: "r1", name: "Fallback Rocket", type: "rocket"),
+            launchpad: Launchpad(id: "pad1", name: "Fallback Pad", fullName: nil, locality: nil, region: nil, latitude: nil, longitude: nil)
+        )
         let sut = LaunchDetailRepository(
             launchDetailDataSource: MockDetailDS(error: MockRepoError.failed),
             launchpadDataSource: MockLaunchpadDS(launchpad: nil),
@@ -68,7 +90,29 @@ final class LaunchDetailRepositoryTests: XCTestCase {
             crewDataSource: MockCrewDS(crewMember: nil),
             capsuleDataSource: MockCapsuleDS(capsule: nil),
             shipDataSource: MockShipDS(ship: nil),
-            networkMonitor: MockNetworkMonitor(isConnected: false)
+            networkMonitor: MockNetworkMonitor(isConnected: false),
+            fallbackDataSource: fallback
+        )
+
+        let detail = try await sut.fetchDetail(for: "l1")
+
+        XCTAssertEqual(detail.launch.id, "l1")
+        XCTAssertEqual(detail.rocket?.name, "Fallback Rocket")
+        XCTAssertEqual(detail.launchpad?.name, "Fallback Pad")
+        XCTAssertTrue(detail.isStale)
+    }
+
+    func test_fetch_offline_withoutFallback_throwsOfflineUnavailable() async {
+        let sut = LaunchDetailRepository(
+            launchDetailDataSource: MockDetailDS(error: MockRepoError.failed),
+            launchpadDataSource: MockLaunchpadDS(launchpad: nil),
+            rocketDataSource: MockRocketDS(rocket: nil),
+            payloadDataSource: MockPayloadDS(payload: nil),
+            crewDataSource: MockCrewDS(crewMember: nil),
+            capsuleDataSource: MockCapsuleDS(capsule: nil),
+            shipDataSource: MockShipDS(ship: nil),
+            networkMonitor: MockNetworkMonitor(isConnected: false),
+            fallbackDataSource: nil
         )
 
         do {
@@ -194,6 +238,35 @@ private final class MockShipDS: ShipRemoteDataSourceProtocol {
     func fetchShip(for id: String) async throws -> Ship {
         guard let ship else { throw MockRepoError.failed }
         return ship
+    }
+}
+
+private final class MockLaunchFallbackDS: LaunchFallbackDataSourceProtocol {
+    let launch: LaunchDTO?
+    let rocket: RocketSummary?
+    let launchpad: Launchpad?
+
+    init(launch: LaunchDTO?, rocket: RocketSummary?, launchpad: Launchpad?) {
+        self.launch = launch
+        self.rocket = rocket
+        self.launchpad = launchpad
+    }
+
+    func fetchLaunchPage(for rocketId: String, page: Int, limit: Int) throws -> LaunchPageDTO {
+        LaunchPageDTO(docs: launch.map { [$0] } ?? [], hasNextPage: false, nextPage: nil)
+    }
+
+    func fetchLaunch(for launchId: String) throws -> LaunchDTO {
+        guard let launch else { throw LaunchDetailError.launchNotFound(id: launchId) }
+        return launch
+    }
+
+    func fetchRocketSummary(for rocketId: String) -> RocketSummary? {
+        rocket
+    }
+
+    func fetchLaunchpad(for launchpadId: String) -> Launchpad? {
+        launchpad
     }
 }
 
