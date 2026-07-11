@@ -8,7 +8,7 @@ protocol LaunchCacheStoreProtocol {
 }
 
 final class UserDefaultsLaunchCacheStore: LaunchCacheStoreProtocol {
-    private static let knownIdsKey = "launchCache_knownRocketIds"
+    private static let knownIdsKey = "launchCache_v4_knownRocketIds"
 
     private let defaults: UserDefaults
     private let encoder = JSONEncoder()
@@ -56,7 +56,7 @@ final class UserDefaultsLaunchCacheStore: LaunchCacheStoreProtocol {
     }
 
     private func cacheKey(for rocketId: String) -> String {
-        "launches_\(rocketId)"
+        "launches_v4_\(rocketId)"
     }
 
     private func updateKnownIds(adding rocketId: String) {

@@ -62,9 +62,24 @@ final class LaunchCacheStoreTests: XCTestCase {
     }
 
     func test_load_corruptData_returnsNil_doesNotCrash() {
-        testDefaults.set("broken-json".data(using: .utf8), forKey: "launches_corruptRocket")
+        testDefaults.set("broken-json".data(using: .utf8), forKey: "launches_v4_corruptRocket")
 
         XCTAssertNil(sut.load(for: "corruptRocket"))
+    }
+
+    func test_load_ignoresLegacyCacheEntries() {
+        let legacyLaunches = [Self.makeLaunch(id: "legacy")]
+        let encoder = JSONEncoder()
+        let legacyData = try? encoder.encode(legacyLaunches)
+        testDefaults.set(legacyData, forKey: "launches_rocketA")
+        testDefaults.set(legacyData, forKey: "launches_v2_rocketA")
+        testDefaults.set(legacyData, forKey: "launches_v3_rocketA")
+        testDefaults.set(["rocketA"], forKey: "launchCache_knownRocketIds")
+        testDefaults.set(["rocketA"], forKey: "launchCache_v2_knownRocketIds")
+        testDefaults.set(["rocketA"], forKey: "launchCache_v3_knownRocketIds")
+
+        XCTAssertNil(sut.load(for: "rocketA"))
+        XCTAssertFalse(sut.allKnownRocketIds().contains("rocketA"))
     }
 
     func test_allKnownRocketIds_tracksInsertedRocketIds() {
