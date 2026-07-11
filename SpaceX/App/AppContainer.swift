@@ -26,17 +26,21 @@ final class AppContainer {
     lazy var crewRemoteDataSource: CrewRemoteDataSourceProtocol = CrewRemoteDataSource(httpClient: httpClient)
     lazy var capsuleRemoteDataSource: CapsuleRemoteDataSourceProtocol = CapsuleRemoteDataSource(httpClient: httpClient)
     lazy var shipRemoteDataSource: ShipRemoteDataSourceProtocol = ShipRemoteDataSource(httpClient: httpClient)
+    lazy var rocketFallbackDataSource: RocketFallbackDataSourceProtocol = BundledRocketDataSource()
+    lazy var launchFallbackDataSource: LaunchFallbackDataSourceProtocol = BundledLaunchDataSource()
     lazy var rocketCacheStore: RocketCacheStoreProtocol = UserDefaultsRocketCacheStore(defaults: userDefaults)
     lazy var launchCacheStore: LaunchCacheStoreProtocol = UserDefaultsLaunchCacheStore(defaults: userDefaults)
     lazy var rocketRepository: RocketRepositoryProtocol = RocketRepository(
         remoteDataSource: rocketRemoteDataSource,
         cacheStore: rocketCacheStore,
-        networkMonitor: networkMonitor
+        networkMonitor: networkMonitor,
+        fallbackDataSource: rocketFallbackDataSource
     )
     lazy var launchRepository: LaunchRepositoryProtocol = LaunchRepository(
         remoteDataSource: launchRemoteDataSource,
         cacheStore: launchCacheStore,
-        networkMonitor: networkMonitor
+        networkMonitor: networkMonitor,
+        fallbackDataSource: launchFallbackDataSource
     )
     lazy var launchDetailRepository: LaunchDetailRepositoryProtocol = LaunchDetailRepository(
         launchDetailDataSource: launchDetailRemoteDataSource,
@@ -46,7 +50,8 @@ final class AppContainer {
         crewDataSource: crewRemoteDataSource,
         capsuleDataSource: capsuleRemoteDataSource,
         shipDataSource: shipRemoteDataSource,
-        networkMonitor: networkMonitor
+        networkMonitor: networkMonitor,
+        fallbackDataSource: launchFallbackDataSource
     )
     lazy var dateFormatter: DateFormatting = DefaultDateFormatter()
     lazy var rocketFormatter: RocketFormatting = DefaultRocketFormatter()
