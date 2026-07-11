@@ -156,9 +156,7 @@ final class LaunchViewController: UIViewController, UICollectionViewDelegate {
                 applySnapshot(for: state, animating: false)
             } else {
                 launchView.hideLoadingOverlay()
-                DispatchQueue.main.async { [weak self] in
-                    self?.launchView.collectionView.reloadData()
-                }
+                updatePaginationFooter()
             }
             
         case .loaded(let viewModels, let isStale):
@@ -233,6 +231,16 @@ final class LaunchViewController: UIViewController, UICollectionViewDelegate {
             footer.configure(isVisible: self.isPaginating)
             return footer
         }
+    }
+
+    private func updatePaginationFooter() {
+        guard let sectionIndex = dataSource?.snapshot().sectionIdentifiers.firstIndex(of: .launches) else { return }
+        let indexPath = IndexPath(item: 0, section: sectionIndex)
+        guard let footer = launchView.collectionView.supplementaryView(
+            forElementKind: UICollectionView.elementKindSectionFooter,
+            at: indexPath
+        ) as? PaginationFooterView else { return }
+        footer.configure(isVisible: isPaginating)
     }
 
     private func applySnapshot(for state: LoadableState<[LaunchCellViewModel]>, animating: Bool) {
