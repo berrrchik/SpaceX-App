@@ -8,6 +8,7 @@ final class LaunchRepositoryOfflineTests: XCTestCase {
     private var testDefaults: UserDefaults!
     private var cacheStore: UserDefaultsLaunchCacheStore!
     private var remoteDataSource: MockLaunchRemoteDataSource!
+    private var fallbackDataSource: MockLaunchFallbackDataSource!
     private var networkMonitor: MockNetworkMonitor!
     private var sut: LaunchRepository!
 
@@ -20,17 +21,20 @@ final class LaunchRepositoryOfflineTests: XCTestCase {
         testDefaults = defaults
         cacheStore = UserDefaultsLaunchCacheStore(defaults: defaults)
         remoteDataSource = MockLaunchRemoteDataSource()
+        fallbackDataSource = MockLaunchFallbackDataSource()
         networkMonitor = MockNetworkMonitor(isConnected: true)
         sut = LaunchRepository(
             remoteDataSource: remoteDataSource,
             cacheStore: cacheStore,
-            networkMonitor: networkMonitor
+            networkMonitor: networkMonitor,
+            fallbackDataSource: fallbackDataSource
         )
     }
 
     override func tearDown() {
         testDefaults.removePersistentDomain(forName: Self.suiteName)
         sut = nil
+        fallbackDataSource = nil
         remoteDataSource = nil
         networkMonitor = nil
         cacheStore = nil
@@ -57,15 +61,17 @@ final class LaunchRepositoryOfflineTests: XCTestCase {
         XCTAssertFalse(result.hasNextPage)
     }
 
-    func test_fetchInitialLaunches_networkFailure_emptyCache_throws() async {
+    func test_fetchInitialLaunches_networkFailure_emptyCache_returnsBundledFallback() async throws {
         remoteDataSource.stubbedError = NetworkError.transport(URLError(.notConnectedToInternet))
+        fallbackDataSource.stubbedLaunches = [
+            Self.makeLaunchDTO(id: "fallback-1", rocketId: "rocket-x")
+        ]
 
-        do {
-            _ = try await sut.fetchInitialLaunches(for: "rocket-x")
-            XCTFail("Expected error to be thrown")
-        } catch {
-            XCTAssertTrue(error is NetworkError)
-        }
+        let result = try await sut.fetchInitialLaunches(for: "rocket-x")
+
+        XCTAssertTrue(result.isStale)
+        XCTAssertEqual(result.launches.map(\.id), ["fallback-1"])
+        XCTAssertEqual(cacheStore.load(for: "rocket-x")?.map(\.id), ["fallback-1"])
     }
 
     func test_fetchInitialLaunches_offlineWithoutRequest_returnsCachedData() async throws {
@@ -97,6 +103,40 @@ final class LaunchRepositoryOfflineTests: XCTestCase {
         XCTAssertTrue(result.launches.isEmpty)
         XCTAssertFalse(result.hasNextPage)
         XCTAssertEqual(remoteDataSource.fetchLaunchPageCallCount, 0)
+    }
+
+    func test_fetchInitialLaunches_offlineEmptyCache_returnsBundledFallbackWithoutRequest() async throws {
+        networkMonitor.isConnectedValue = false
+        fallbackDataSource.stubbedLaunches = [
+            Self.makeLaunchDTO(id: "fallback-1", rocketId: "rocket-x")
+        ]
+
+        let result = try await sut.fetchInitialLaunches(for: "rocket-x")
+
+        XCTAssertTrue(result.isStale)
+        XCTAssertEqual(result.launches.map(\.id), ["fallback-1"])
+        XCTAssertEqual(remoteDataSource.fetchLaunchPageCallCount, 0)
+    }
+
+    func test_fetchNextLaunchPage_networkFailure_returnsBundledFallbackPage() async throws {
+        remoteDataSource.stubbedError = NetworkError.server(statusCode: 525, data: nil)
+        fallbackDataSource.stubbedLaunches = [
+            Self.makeLaunchDTO(id: "fallback-1", rocketId: "rocket-x"),
+            Self.makeLaunchDTO(id: "fallback-2", rocketId: "rocket-x")
+        ]
+        sut = LaunchRepository(
+            remoteDataSource: remoteDataSource,
+            cacheStore: cacheStore,
+            networkMonitor: networkMonitor,
+            fallbackDataSource: fallbackDataSource,
+            pageSize: 1
+        )
+
+        let result = try await sut.fetchNextLaunchPage(for: "rocket-x", page: 2)
+
+        XCTAssertTrue(result.isStale)
+        XCTAssertEqual(result.launches.map(\.id), ["fallback-2"])
+        XCTAssertFalse(result.hasNextPage)
     }
 }
 
@@ -135,5 +175,60 @@ private final class MockNetworkMonitor: NetworkMonitorProtocol {
 
     func isConnected() -> Bool {
         isConnectedValue
+    }
+}
+
+private final class MockLaunchFallbackDataSource: LaunchFallbackDataSourceProtocol {
+    var stubbedLaunches: [LaunchDTO] = []
+
+    func fetchLaunchPage(for rocketId: String, page: Int, limit: Int) throws -> LaunchPageDTO {
+        let launches = stubbedLaunches.filter { $0.rocket == rocketId }
+        let startIndex = max(page - 1, 0) * limit
+        guard startIndex < launches.count else {
+            return LaunchPageDTO(docs: [], hasNextPage: false, nextPage: nil)
+        }
+        let endIndex = min(startIndex + limit, launches.count)
+        let docs = Array(launches[startIndex..<endIndex])
+        return LaunchPageDTO(
+            docs: docs,
+            hasNextPage: endIndex < launches.count,
+            nextPage: endIndex < launches.count ? page + 1 : nil
+        )
+    }
+
+    func fetchLaunch(for launchId: String) throws -> LaunchDTO {
+        guard let launch = stubbedLaunches.first(where: { $0.id == launchId }) else {
+            throw LaunchDetailError.launchNotFound(id: launchId)
+        }
+        return launch
+    }
+
+    func fetchRocketSummary(for rocketId: String) -> RocketSummary? {
+        RocketSummary(id: rocketId, name: "Fallback Rocket", type: "rocket")
+    }
+
+    func fetchLaunchpad(for launchpadId: String) -> Launchpad? {
+        Launchpad(id: launchpadId, name: "Fallback Pad", fullName: nil, locality: nil, region: nil, latitude: nil, longitude: nil)
+    }
+}
+
+private extension LaunchRepositoryOfflineTests {
+    static func makeLaunchDTO(id: String, rocketId: String) -> LaunchDTO {
+        LaunchDTO(
+            id: id,
+            name: "Fallback Launch",
+            dateUtc: "2024-01-01T00:00:00.000Z",
+            success: true,
+            rocket: rocketId,
+            upcoming: false,
+            details: "Fallback details",
+            launchpad: "pad-1",
+            links: nil,
+            cores: nil,
+            payloads: ["payload-1"],
+            crew: nil,
+            ships: nil,
+            capsules: nil
+        )
     }
 }

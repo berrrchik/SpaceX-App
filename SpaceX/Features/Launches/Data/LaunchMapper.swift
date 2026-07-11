@@ -72,6 +72,9 @@ struct LaunchMapper {
 
     private func sanitizedHTTPSURL(from raw: String?) -> URL? {
         guard let raw, let url = URL(string: raw) else { return nil }
+        if url.scheme?.lowercased() == "launch-image" {
+            return url
+        }
         if url.scheme?.lowercased() == "https" {
             return url
         }
